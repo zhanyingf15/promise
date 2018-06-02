@@ -109,6 +109,7 @@ new PromiseA()
 .pCatch(error->xxxx)//捕获中间可能产生的异常
 ```
 ### Docs
+[TOC]
 #### promise规范
 promise规范可以参考 [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)。其中[ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise) 在Promise A+规范上做了一些补充。java promise在使用上基本与ES6 Promise对象保持一致，部分地方有些许不同，后面会做出说明。
 Promise的三个状态
