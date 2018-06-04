@@ -1,6 +1,4 @@
-# promise
-Promise使用commonJs规范中的一中异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。   
-在java中，多线程编程相对来说是一件比较麻烦的事情，虽然在java `concurrent`包中提供了一系列工具，但是我们想知道线程何时结束、获取线程执行结果、异常处理一直是件比较麻烦的事。`future.get()`会阻塞当前线程。Goolge-Guava Concurrent中的Service和ServiceManager很好地解决了这一问题，但是使用繁琐。某些时候我们需要线程a结束后，拿到线程a的结果立即执行线程b，可能会使用guava的ListenableFuture添加监听，可能得逻辑如下
+Promise是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。   在java中，多线程编程相对来说是一件比较麻烦的事情，虽然在java `concurrent`包中提供了一系列工具，但是我们想知道线程何时结束、获取线程执行结果、异常处理一直是件比较麻烦的事。`future.get()`会阻塞当前线程。Goolge-Guava Concurrent中的Service和ServiceManager很好地解决了这一问题，但是使用繁琐。某些时候我们需要线程a结束后，拿到线程a的结果立即执行线程b，可能会使用guava的ListenableFuture添加监听，可能得逻辑如下
 ```java
 public static void main(String[] args) throws Exception{
     ExecutorService pool = Executors.newFixedThreadPool(1);
@@ -72,7 +70,7 @@ IPromise promiseA = new Promise.Builder().pool(pool).promiseHanler(executor -> {
     }
     return random.nextInt(100);
 }).build();
-promiseA.then(resultA -> {//PromiseB的成功回调
+promiseA.then(resultA -> {//PromiseA的成功回调
     //在promiseA的回调中创建PromiseB
     IPromise promiseB = new Promise.Builder().pool(pool).externalInput(resultA)
             .promiseHanler(executor -> {
@@ -110,6 +108,58 @@ new PromiseA()
 .pCatch(error->xxxx)//捕获中间可能产生的异常
 ```
 ### Docs
+- [java Promise](#java-Promise)
+- [Docs](#Docs)
+    - [promise规范](#promise规范)
+    - [Promise](#Promise)
+        - [IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)](#IPromise-then(OnFulfilledExecutor-onFulfilledExecutor,-OnRejectedExecutor-onRejectedExecutor))
+        - [IPromise pCatch(OnCatchedExecutor onCatchedExecutor);](#IPromise-pCatch(OnCatchedExecutor-onCatchedExecutor);)
+        - [void listen(OnCompleteListener onCompleteListener);](#void-listen(OnCompleteListener-onCompleteListener);)
+        - [void pFinally(OnCompleteListener onCompleteListener);](#void-pFinally(OnCompleteListener-onCompleteListener);)
+        - [Status getStatus()](#Status-getStatus())
+        - [Object getResolvedData()](#Object-getResolvedData())
+        - [Throwable getRejectedData()](#Throwable-getRejectedData())
+        - [Future getFuture()](#Future-getFuture())
+        - [boolean cancel()](#boolean-cancel())
+    - [Promise.Builder](#Promise.Builder)
+        - [Builder pool(ExecutorService threadPool)](#Builder-pool(ExecutorService-threadPool))
+        - [Builder promiseHanler(PromiseHandler promiseExecutor)](#Builder-promiseHanler(PromiseHandler-promiseExecutor))
+        - [Builder externalInput(Object externalInput)](#Builder-externalInput(Object-externalInput))
+        - [Builder promise(IPromise promise)](#Builder-promise(IPromise-promise))
+        - [IPromise build()](#IPromise-build())
+    - [Promise的静态方法](#Promise的静态方法)
+        - [static IPromise all(IPromise ...promises)](#static-IPromise-all(IPromise-...promises))
+        - [static IPromise race(IPromise ...promises)](#static-IPromise-race(IPromise-...promises))
+        - [static IPromise resolve()](#static-IPromise-resolve())
+        - [static IPromise resolve(Object object)](#static-IPromise-resolve(Object-object))
+        - [static IPromise resolve(Object object,List<Object> args)](#static-IPromise-resolve(Object-object,List<Object>-args))
+        - [static IPromise resolve(Object object,String methodName,List<Object> args)](#static-IPromise-resolve(Object-object,String-methodName,List<Object>-args))
+        - [static IPromise reject(Object reason)](#static-IPromise-reject(Object-reason))
+        - [static IPromise pTry(Object object,String methodName,List<Object> args)](#static-IPromise-pTry(Object-object,String-methodName,List<Object>-args))
+    - [PromiseHandler](#PromiseHandler)
+        - [Object run(PromiseExecutor executor)throws Exception;](#Object-run(PromiseExecutor-executor)throws-Exception;)
+    - [PromiseExecutor](#PromiseExecutor)
+        - [void resolve(final Object args)](#void-resolve(final-Object-args))
+        - [void reject(final Throwable args)](#void-reject(final-Throwable-args))
+        - [Object getExternalInput()](#Object-getExternalInput())
+        - [Object getPromiseInput()](#Object-getPromiseInput())
+    - [OnFulfilledExecutor](#OnFulfilledExecutor)
+        - [Object onFulfilled(Object resolvedData)throws Exception;](#Object-onFulfilled(Object-resolvedData)throws-Exception;)
+    - [OnRejectedExecutor](#OnRejectedExecutor)
+        - [void onRejected(Throwable rejectReason)throws Exception;](#void-onRejected(Throwable-rejectReason)throws-Exception;)
+    - [OnCatchedExecutor](#OnCatchedExecutor)
+        - [Object onCatched(Throwable catchReason)throws Exception;](#Object-onCatched(Throwable-catchReason)throws-Exception;)
+    - [OnCompleteListener](#OnCompleteListener)
+        - [void listen(Object resolvedData,Throwable e);](#void-listen(Object-resolvedData,Throwable-e);)
+    - [示例](#示例)
+        - [示例1：基本使用](#示例1：基本使用)
+        - [示例2：promise resolve promise](#示例2：promise-resolve-promise)
+        - [示例3：错误处理](#示例3：错误处理)
+        - [示例4：pCatch](#示例4：pCatch)
+        - [示例5：Promise.all(IPromise ...promises)](#示例5：Promise.all(IPromise-...promises))
+        - [示例6：线程取消](#示例6：线程取消)
+        - [示例7：同步方法异步执行](#示例7：同步方法异步执行)
+
 #### promise规范
 promise规范可以参考 [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)。其中[ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise) 在Promise A+规范上做了一些补充。java promise在使用上基本与ES6 Promise对象保持一致，部分地方有些许不同，后面会做出说明。
 Promise的三个状态
@@ -118,15 +168,15 @@ Promise的三个状态
 * rejected:拒绝态，对应线程异常结束，其异常原因称为**拒因**   
   状态转移只能由pending->fulfilled或pending->rejected，状态一旦发生转移无法再次改变。
 #### Promise
-Promise是Ipromise的实现，部分接口如下
-##### IPromise then(OnFulfilledExecutor onFulfilledExecutor)
+Promise是IPromise的实现，Promise实例一经创建，将立即异步执行，部分接口如下
+##### IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)
 * 如果当前promise处于pending状态，阻塞当前线程，等待promise状态转变为fulfilled或rejected
 * 如果处于fulfilled状态，执行onFulfilledExecutor.onFulfilled(resolvedData)回调。
      * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
      * 如果执行回调过程中产生异常e,返回一个以e作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch。
 * 如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
-     参数：
-#### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
+        参数：
+##### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
 then(null,onRejectedExecutor)的别名，但返回不同于then，出现异常时可以选择不拒绝接下来Promise的执行，可用于异常修正，类似于try{}catch{}   
 该方法会尝试捕获当前promise的异常,最终返回一个新Promise,当被捕获Promise处于不同的状态时有不同的行为
 * pending：阻塞当前线程，等待pending转变为fulfilled或rejected，行为同then
@@ -154,7 +204,7 @@ Promise对象生成器
 ##### Builder pool(ExecutorService threadPool)
 指定一个线程池用于执行promise任务,如果不指定，每一个promise都将启动一个线程
 ##### Builder promiseHanler(PromiseHandler promiseExecutor)
-指定promise处理器,在promiseHanler的run方法中实现线程的具体业务逻辑
+指定promise执行器,在promiseHanler的run方法中实现线程的具体业务逻辑，注意==promise对象一经创建，将立即执行其中的逻辑==
 ##### Builder externalInput(Object externalInput)
 向Promise注入一个外部参数，可以在指定PromiseHandler时通过PromiseExecutor.getExternalInput()获取
 ```java
@@ -280,7 +330,7 @@ fulfilled回调接口
 rejected回调接口
 ##### void onRejected(Throwable rejectReason)throws Exception;
 当Promise转变为rejected状态时的回调
-##### OnCatchedExecutor
+#### OnCatchedExecutor
 rejected回调接口
 ##### Object onCatched(Throwable catchReason)throws Exception;
 当发生异常时的回调,最终返回一个Promise或普通对象，如果是一个普通对象，这个对象将作为下一个Promise的终值
@@ -334,7 +384,7 @@ new Promise.Builder().promiseHanler(new PromiseHandler(){
 4
 8
 ```
-##### 示例2
+##### 示例2：promise resolve promise
 ```java
 ExecutorService fixedPool = Promise.pool(1);//创建一个线程池
 //创建promise1
@@ -379,4 +429,149 @@ new Promise.Builder().promiseHanler(executor -> 3).build().then(resolvedData->{
 a:3
 c:java.lang.RuntimeException: err
 ```
+##### 示例4：pCatch
+```java
+new Promise.Builder().promiseHanler(executor -> 0).build()
+  .then(res0->{
+    System.out.println("a:"+res0);//输出 a:0
+    Thread.sleep(100);
+    return 1;//返回1
+}).then(res1 -> {
+    throw new RuntimeException("throw error");//抛出异常
+}).then(res2->{
+    Thread.sleep(100);
+    System.out.println("b:"+res2);
+    return 2;
+}).pCatch(e->{
+    Thread.sleep(100);
+    System.out.println("c:");//输出c:
+    e.printStackTrace();
+    return 3;
+}).then(res3->{
+    Thread.sleep(100);
+    System.out.println("d:"+res3);//输出d:3
+    return 4;
+});
+```
+结果
+```
+a:0
+c:
+runtimeException:throw error
+d:3
+```
+从上面结果可以看出,在res1出抛出异常后，拒绝了res2处的执行，被pCatch捕获,pCatch返回3,被包装成终值为3、fulfilled状态的promise，在res3打印d:3。
+##### 示例5：Promise.all(IPromise ...promises)
+```java
+IPromise p1 = new Promise.Builder().promiseHanler(executor -> {
+    Thread.sleep(1000);
+    return 1;
+}).build();
+IPromise p2 = new Promise.Builder().promiseHanler(executor -> {
+    Thread.sleep(4000);
+    return 2;
+}).build();
+IPromise p3 = new Promise.Builder().promiseHanler(executor -> {
+    Thread.sleep(2000);
+    return 3;
+}).build();
+long s = System.currentTimeMillis();
+Promise.all(p1,p2,p3).then(resolvedData -> {
+    Object[] datas = (Object[])resolvedData;
+    for(Object d:datas){
+        System.out.println(d);
+    }
+    return null;
+},e->e.printStackTrace());
+System.out.println("耗时："+(System.currentTimeMillis()-s));
+```
+结果
+```
+1
+2
+3
+耗时：4033
+```
+##### 示例6：线程取消
+```java
+Map<String,Boolean> p1Flag = new HashMap<>();
+p1Flag.put("flag",true);
+IPromise p1 = new Promise.Builder().externalInput(p1Flag).promiseHanler(executor -> {
+    while (((Map<String,Boolean>)executor.getExternalInput()).get("flag")){
+        //do something
+        System.out.println("p1 正在执行任务");
+    }
+    System.out.println("p1任务完成，正常结束");
+    return 1;
+}).build();
+IPromise p2 = new Promise.Builder().promiseHanler(executor -> {
+    while (!Thread.currentThread().isInterrupted()){
+        System.out.println("执行p2正常逻辑");
+    }
+    System.err.println("p2线程被取消");
+    return 2;
+}).build();
+IPromise p3 = new Promise.Builder().promiseHanler(executor -> {
+    Thread.sleep(10);
+    throw new RuntimeException("p3抛出异常");
+}).build();
+IPromise p4 = new Promise.Builder().finalPromise("4",true).build();
+long s = System.currentTimeMillis();
+Promise.all(p1,p2,p3,p4).then(resolvedData -> {
+    Object[] datas = (Object[])resolvedData;
+    for(Object d:datas){
+        System.out.println(d);
+    }
+    return null;
+},e->e.printStackTrace());
+System.out.println("耗时："+(System.currentTimeMillis()-s));
+p1Flag.put("flag",false);
+```
+可能的结果如下
+```
+p1 正在执行任务
+p1 正在执行任务
+执行p2正常逻辑
+执行p2正常逻辑
+p1 正在执行任务 
+runtimeException：p3抛出异常
+p2线程被取消
+p1 正在执行任务
+p1 正在执行任务
+p1 正在执行任务 
+p1任务完成，正常结束
+```
+从上面结果可以看出，开始p1和p2都在正常执行，当p3抛出异常后，Promise.all方法立即返回p3的异常并打印，同时取消p1和p2的执行，由于p2判断了线程状态`Thread.currentThread().isInterrupted()`,所以p2执行了正常的退出逻辑。p1仍然在执行，并没有被取消掉，最后打印p1任务完成，正常结束是因为程序末尾执行了`p1Flag.put("flag",false);`，否则p1会永远循环打印。
+##### 示例7：同步方法异步执行
+```java
+public class ThenTest {
+    public Integer then(int a,int b){
+        //打印当前执行现场名称
+        System.out.println(Thread.currentThread().getName());
+        return a+b;
+    }
+    public static void main(String[] args){
+        //打印主线程名称
+        System.out.println(Thread.currentThread().getName());
+        List arg = new ArrayList<>();
+        arg.add(1);
+        arg.add(2);
+        //将ThenTest实例then方法异步执行
+        Promise.resolve(new ThenTest(),arg).then(resolvedData -> {
+            System.out.println(resolvedData);
+            return resolvedData;
+        }).pCatch(e->{
+            e.printStackTrace();
+            return 1;
+        });
+    }
+}
+```
+结果
+```
+main
+promise-thread-0
+3
+```
+
 
