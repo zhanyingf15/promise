@@ -160,6 +160,7 @@ new PromiseA()
         - [示例6：线程取消](#示例6：线程取消)
         - [示例7：同步方法异步执行](#示例7：同步方法异步执行)
 
+
 #### promise规范
 promise规范可以参考 [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)。其中[ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise) 在Promise A+规范上做了一些补充。java promise在使用上基本与ES6 Promise对象保持一致，部分地方有些许不同，后面会做出说明。
 Promise的三个状态
@@ -170,12 +171,12 @@ Promise的三个状态
 #### Promise
 Promise是IPromise的实现，Promise实例一经创建，将立即异步执行，部分接口如下
 ##### IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)
-* 如果当前promise处于pending状态，阻塞当前线程，等待promise状态转变为fulfilled或rejected
-* 如果处于fulfilled状态，执行onFulfilledExecutor.onFulfilled(resolvedData)回调。
+*    如果当前promise处于pending状态，阻塞当前线程，等待promise状态转变为fulfilled或rejected
+*    如果处于fulfilled状态，执行onFulfilledExecutor.onFulfilled(resolvedData)回调。
      * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
      * 如果执行回调过程中产生异常e,返回一个以e作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch。
-* 如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
-        参数：
+*    如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
+                 参数：
 ##### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
 then(null,onRejectedExecutor)的别名，但返回不同于then，出现异常时可以选择不拒绝接下来Promise的执行，可用于异常修正，类似于try{}catch{}   
 该方法会尝试捕获当前promise的异常,最终返回一个新Promise,当被捕获Promise处于不同的状态时有不同的行为
@@ -248,9 +249,9 @@ IPromise promise2 = new Promise.Builder().pool(fixedPool)
 创建一个终值为null、fulfilled状态的promise
 ##### static IPromise resolve(Object object)
 创建一个终值为object、fulfilled状态的promise
-##### static IPromise resolve(Object object,List<Object> args)
+##### static IPromise resolve(Object object,List  args)
 将object的then方法以异步方式执行，then方法的执行结果作为Promise的终值
-##### static IPromise resolve(Object object,String methodName,List<Object> args)
+##### static IPromise resolve(Object object,String methodName,List  args)
 将object的指定方法以异步方式执行，该方法的执行结果作为Promise的终值，目标方法的参数必须按顺序包含在List中，如object.doSomething(int a,Map b)，用resolve执行为
 ```java
 List args = new ArrayList()
@@ -260,7 +261,7 @@ Promise.resolve(object,"doSomething",args);
 ```
 ##### static IPromise reject(Object reason)
 创建一个拒因为reason、rejected状态的promise
-##### static IPromise pTry(Object object,String methodName,List<Object> args)
+##### static IPromise pTry(Object object,String methodName,List  args)
 将object的指定方法以同步方式执行，该方法的执行结果作为Promise的终值，如果object为IPromise实例，将忽略methodName和args参数，异步执行该实例。   
 该方法是以Promise统一处理同步和异步方法，不管object是同步操作还是异步操作，都可以使用then指定下一步流程,用pCatch方法捕获异常,避免开发中出现以下情况
 ```
