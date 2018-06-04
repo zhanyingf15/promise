@@ -354,7 +354,7 @@ new Promise.Builder().promiseHanler(new PromiseHandler(){
     public Object onFulfilled(Object resolvedData) {
         Integer i = ((Integer)resolvedData)+1;//获取上一个promsie执行结果3,执行+1
         System.out.println(i);//输出执行结果4
-        //创建一个新的promise，将3作为该promise的输入
+        //创建一个新的promise，将4作为该promise的输入
         IPromise p = new Promise.Builder().externalInput(i).promiseHanler(new PromiseHandler() {
             @Override
             public Object run(PromiseExecutor executor) {
