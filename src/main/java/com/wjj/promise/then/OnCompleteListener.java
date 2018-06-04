@@ -2,7 +2,6 @@ package com.wjj.promise.then;
 
 /**
  * @author wangjiajun
- * @date 2018/5/31 11:46
  */
 @FunctionalInterface
 public interface OnCompleteListener {

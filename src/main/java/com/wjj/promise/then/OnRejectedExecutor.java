@@ -2,7 +2,6 @@ package com.wjj.promise.then;
 
 /**
  * @author wangjiajun
- * @date 2018/5/28 11:13
  */
 @FunctionalInterface
 public interface OnRejectedExecutor {

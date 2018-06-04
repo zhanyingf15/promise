@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * @author wangjiajun
- * @date 2018/5/28 11:17
  */
 public class App {
     public static void main(String[] args){

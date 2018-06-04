@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 
 /**
  * @author wangjiajun
- * @date 2018/5/30 15:56
  */
 public interface IPromise extends Callable {
     /**
