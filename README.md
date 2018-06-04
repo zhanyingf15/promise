@@ -1,4 +1,5 @@
-Promise是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。   在java中，多线程编程相对来说是一件比较麻烦的事情，虽然在java `concurrent`包中提供了一系列工具，但是我们想知道线程何时结束、获取线程执行结果、异常处理一直是件比较麻烦的事。`future.get()`会阻塞当前线程。Goolge-Guava Concurrent中的Service和ServiceManager很好地解决了这一问题，但是使用繁琐。某些时候我们需要线程a结束后，拿到线程a的结果立即执行线程b，可能会使用guava的ListenableFuture添加监听，可能得逻辑如下
+Promise是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。   
+在java中，多线程编程相对来说是一件比较麻烦的事情，虽然在java `concurrent`包中提供了一系列工具，但是我们想知道线程何时结束、获取线程执行结果、异常处理一直是件比较麻烦的事。`future.get()`会阻塞当前线程。Goolge-Guava Concurrent中的Service和ServiceManager很好地解决了这一问题，但是使用繁琐。某些时候我们需要线程a结束后，拿到线程a的结果立即执行线程b，可能会使用guava的ListenableFuture添加监听，可能得逻辑如下
 ```java
 public static void main(String[] args) throws Exception{
     ExecutorService pool = Executors.newFixedThreadPool(1);
@@ -108,58 +109,57 @@ new PromiseA()
 .pCatch(error->xxxx)//捕获中间可能产生的异常
 ```
 ### Docs
-- [java Promise](#java-Promise)
-- [Docs](#Docs)
-    - [promise规范](#promise规范)
-    - [Promise](#Promise)
-        - [IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)](#IPromise-then(OnFulfilledExecutor-onFulfilledExecutor,-OnRejectedExecutor-onRejectedExecutor))
-        - [IPromise pCatch(OnCatchedExecutor onCatchedExecutor);](#IPromise-pCatch(OnCatchedExecutor-onCatchedExecutor);)
-        - [void listen(OnCompleteListener onCompleteListener);](#void-listen(OnCompleteListener-onCompleteListener);)
-        - [void pFinally(OnCompleteListener onCompleteListener);](#void-pFinally(OnCompleteListener-onCompleteListener);)
-        - [Status getStatus()](#Status-getStatus())
-        - [Object getResolvedData()](#Object-getResolvedData())
-        - [Throwable getRejectedData()](#Throwable-getRejectedData())
-        - [Future getFuture()](#Future-getFuture())
-        - [boolean cancel()](#boolean-cancel())
-    - [Promise.Builder](#Promise.Builder)
-        - [Builder pool(ExecutorService threadPool)](#Builder-pool(ExecutorService-threadPool))
-        - [Builder promiseHanler(PromiseHandler promiseExecutor)](#Builder-promiseHanler(PromiseHandler-promiseExecutor))
-        - [Builder externalInput(Object externalInput)](#Builder-externalInput(Object-externalInput))
-        - [Builder promise(IPromise promise)](#Builder-promise(IPromise-promise))
-        - [IPromise build()](#IPromise-build())
-    - [Promise的静态方法](#Promise的静态方法)
-        - [static IPromise all(IPromise ...promises)](#static-IPromise-all(IPromise-...promises))
-        - [static IPromise race(IPromise ...promises)](#static-IPromise-race(IPromise-...promises))
-        - [static IPromise resolve()](#static-IPromise-resolve())
-        - [static IPromise resolve(Object object)](#static-IPromise-resolve(Object-object))
-        - [static IPromise resolve(Object object,List<Object> args)](#static-IPromise-resolve(Object-object,List<Object>-args))
-        - [static IPromise resolve(Object object,String methodName,List<Object> args)](#static-IPromise-resolve(Object-object,String-methodName,List<Object>-args))
-        - [static IPromise reject(Object reason)](#static-IPromise-reject(Object-reason))
-        - [static IPromise pTry(Object object,String methodName,List<Object> args)](#static-IPromise-pTry(Object-object,String-methodName,List<Object>-args))
-    - [PromiseHandler](#PromiseHandler)
-        - [Object run(PromiseExecutor executor)throws Exception;](#Object-run(PromiseExecutor-executor)throws-Exception;)
-    - [PromiseExecutor](#PromiseExecutor)
-        - [void resolve(final Object args)](#void-resolve(final-Object-args))
-        - [void reject(final Throwable args)](#void-reject(final-Throwable-args))
-        - [Object getExternalInput()](#Object-getExternalInput())
-        - [Object getPromiseInput()](#Object-getPromiseInput())
-    - [OnFulfilledExecutor](#OnFulfilledExecutor)
-        - [Object onFulfilled(Object resolvedData)throws Exception;](#Object-onFulfilled(Object-resolvedData)throws-Exception;)
-    - [OnRejectedExecutor](#OnRejectedExecutor)
-        - [void onRejected(Throwable rejectReason)throws Exception;](#void-onRejected(Throwable-rejectReason)throws-Exception;)
-    - [OnCatchedExecutor](#OnCatchedExecutor)
-        - [Object onCatched(Throwable catchReason)throws Exception;](#Object-onCatched(Throwable-catchReason)throws-Exception;)
-    - [OnCompleteListener](#OnCompleteListener)
-        - [void listen(Object resolvedData,Throwable e);](#void-listen(Object-resolvedData,Throwable-e);)
-    - [示例](#示例)
-        - [示例1：基本使用](#示例1：基本使用)
-        - [示例2：promise resolve promise](#示例2：promise-resolve-promise)
-        - [示例3：错误处理](#示例3：错误处理)
-        - [示例4：pCatch](#示例4：pCatch)
-        - [示例5：Promise.all(IPromise ...promises)](#示例5：Promise.all(IPromise-...promises))
-        - [示例6：线程取消](#示例6：线程取消)
-        - [示例7：同步方法异步执行](#示例7：同步方法异步执行)
-
+* [java Promise](#java-promise)
+* [Docs](#docs)
+* [promise规范](#promise规范)
+* [Promise](#promise)
+   * [IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)](#ipromise-thenonfulfilledexecutor-onfulfilledexecutor-onrejectedexecutor-onrejectedexecutor)
+   * [IPromise pCatch(OnCatchedExecutor onCatchedExecutor);](#ipromise-pcatchoncatchedexecutor-oncatchedexecutor)
+   * [void listen(OnCompleteListener onCompleteListener);](#void-listenoncompletelistener-oncompletelistener)
+   * [void pFinally(OnCompleteListener onCompleteListener);](#void-pfinallyoncompletelistener-oncompletelistener)
+   * [Status getStatus()](#status-getstatus)
+   * [Object getResolvedData()](#object-getresolveddata)
+   * [Throwable getRejectedData()](#throwable-getrejecteddata)
+   * [Future getFuture()](#future-getfuture)
+   * [boolean cancel()](#boolean-cancel)
+* [Promise.Builder](#promisebuilder)
+   * [Builder pool(ExecutorService threadPool)](#builder-poolexecutorservice-threadpool)
+   * [Builder promiseHanler(PromiseHandler promiseExecutor)](#builder-promisehanlerpromisehandler-promiseexecutor)
+   * [Builder externalInput(Object externalInput)](#builder-externalinputobject-externalinput)
+   * [Builder promise(IPromise promise)](#builder-promiseipromise-promise)
+   * [IPromise build()](#ipromise-build)
+* [Promise的静态方法](#promise的静态方法)
+   * [static IPromise all(IPromise ...promises)](#static-ipromise-allipromise-promises)
+   * [static IPromise race(IPromise ...promises)](#static-ipromise-raceipromise-promises)
+   * [static IPromise resolve()](#static-ipromise-resolve)
+   * [static IPromise resolve(Object object)](#static-ipromise-resolveobject-object)
+   * [static IPromise resolve(Object object,List  args)](#static-ipromise-resolveobject-objectlist--args)
+   * [static IPromise resolve(Object object,String methodName,List  args)](#static-ipromise-resolveobject-objectstring-methodnamelist--args)
+   * [static IPromise reject(Object reason)](#static-ipromise-rejectobject-reason)
+   * [static IPromise pTry(Object object,String methodName,List  args)](#static-ipromise-ptryobject-objectstring-methodnamelist--args)
+* [PromiseHandler](#promisehandler)
+   * [Object run(PromiseExecutor executor)throws Exception;](#object-runpromiseexecutor-executorthrows-exception)
+* [PromiseExecutor](#promiseexecutor)
+   * [void resolve(final Object args)](#void-resolvefinal-object-args)
+   * [void reject(final Throwable args)](#void-rejectfinal-throwable-args)
+   * [Object getExternalInput()](#object-getexternalinput)
+   * [Object getPromiseInput()](#object-getpromiseinput)
+* [OnFulfilledExecutor](#onfulfilledexecutor)
+   * [Object onFulfilled(Object resolvedData)throws Exception;](#object-onfulfilledobject-resolveddatathrows-exception)
+* [OnRejectedExecutor](#onrejectedexecutor)
+   * [void onRejected(Throwable rejectReason)throws Exception;](#void-onrejectedthrowable-rejectreasonthrows-exception)
+* [OnCatchedExecutor](#oncatchedexecutor)
+   * [Object onCatched(Throwable catchReason)throws Exception;](#object-oncatchedthrowable-catchreasonthrows-exception)
+* [OnCompleteListener](#oncompletelistener)
+   * [void listen(Object resolvedData,Throwable e);](#void-listenobject-resolveddatathrowable-e)
+* [示例](#示例)
+   * [示例1：基本使用](#示例1基本使用)
+   * [示例2：promise resolve promise](#示例2promise-resolve-promise)
+   * [示例3：错误处理](#示例3错误处理)
+   * [示例4：pCatch](#示例4pcatch)
+   * [示例5：Promise.all(IPromise ...promises)](#示例5promiseallipromise-promises)
+   * [示例6：线程取消](#示例6线程取消)
+   * [示例7：同步方法异步执行](#示例7同步方法异步执行)   
 
 #### promise规范
 promise规范可以参考 [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)。其中[ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise) 在Promise A+规范上做了一些补充。java promise在使用上基本与ES6 Promise对象保持一致，部分地方有些许不同，后面会做出说明。
@@ -176,7 +176,7 @@ Promise是IPromise的实现，Promise实例一经创建，将立即异步执行�
      * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
      * 如果执行回调过程中产生异常e,返回一个以e作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch。
 *    如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
-                 参数：
+              参数：
 ##### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
 then(null,onRejectedExecutor)的别名，但返回不同于then，出现异常时可以选择不拒绝接下来Promise的执行，可用于异常修正，类似于try{}catch{}   
 该方法会尝试捕获当前promise的异常,最终返回一个新Promise,当被捕获Promise处于不同的状态时有不同的行为
@@ -574,5 +574,3 @@ main
 promise-thread-0
 3
 ```
-
-
