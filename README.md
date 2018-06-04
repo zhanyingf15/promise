@@ -119,7 +119,7 @@ Promise的三个状态
 状态转移只能由pending->fulfilled或pending->rejected，状态一旦发生转移无法再次改变。
 #### Promise
 Promise是IPromise的实现，Promise实例一经创建，将立即异步执行，部分接口如下
-##### IPromise then(OnFulfilledExecutor onFulfilledExecutor)
+##### IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)
 * 如果当前promise处于pending状态，阻塞当前线程，等待promise状态转变为fulfilled或rejected
 * 如果处于fulfilled状态，执行onFulfilledExecutor.onFulfilled(resolvedData)回调。
      * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
