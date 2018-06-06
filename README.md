@@ -1,105 +1,46 @@
-Promise是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。   
-在java中，多线程编程相对来说是一件比较麻烦的事情，虽然在java `concurrent`包中提供了一系列工具，但是我们想知道线程何时结束、获取线程执行结果、异常处理一直是件比较麻烦的事。`future.get()`会阻塞当前线程。Goolge-Guava Concurrent中的Service和ServiceManager很好地解决了这一问题，但是使用繁琐。某些时候我们需要线程a结束后，拿到线程a的结果立即执行线程b，可能会使用guava的ListenableFuture添加监听，可能得逻辑如下
-```java
-public static void main(String[] args) throws Exception{
-    ExecutorService pool = Executors.newFixedThreadPool(1);
-    ListeningExecutorService service = MoreExecutors.listeningDecorator(pool);
-    MoreExecutors.addDelayedShutdownHook(service,3,TimeUnit.SECONDS);
-    ListenableFuture<Integer> listenableFuture = service.submit(()->{
-        Random random = new Random();
-        int i=0;
-        while (i<3){
-            i++;
-            Console.log(random.nextInt(100));
-            Thread.sleep(100);
-        }
-        return random.nextInt(100);
-    });
-    Futures.addCallback(listenableFuture, new FutureCallback<Integer>() {
-        @Override
-        public void onSuccess(@Nullable Integer result) {
-            Console.log("执行结果："+result);
-            //执行线程b
-            .....
-            Console.log("执行线程b");    
-            .....
-        }
-        @Override
-        public void onFailure(Throwable t) {
-            Console.log("线程执行发生错误");
-            t.printStackTrace();
-        }
-    });
-    Console.log("主程序结束了");
-}
-```
-输出结果
-```
-主程序结束了
-47
-62
-48
-执行结果：33
-执行线程b
-```
-可以看到线程b的执行是嵌套在线程a的成功回调中的，然后线程b又是一个回调，做前端的知道ajax的回调地狱是多么痛苦和复杂
-```javascript
-ajax(xxx,function(r1){
-    ajax(xxx,function(r2)){
-        ajax(xxx,function(r3){
-            
-        })
-    }
-})
-```
-在上面java例子中，“主程序结束了”最先被打印，假如需要在springMVC的controller中返回线程b的执行结果，意味着需要在线程b执行结束前阻塞当前线程，这又该怎么做?如果以后需求变化，需要线程a和线程a1共同的执行结果去执行线程b，那改动会相当麻烦。   
-在前端开发中，也经常会遇到同样的问题，commonJs提出的Promise A+规范就很好地解决了这一个问题，ES6已经实现了这个规范。
-* [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)
-* [ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise)  
 ### java Promise
-java promise是一个开源项目，是Promise A+规范的java实现版本，使用Promise可以很好地解决上面例子的监听回调问题，以第一个例子为例，用java Promise实现如下
+java promise是Promise A+规范的java实现版本。Promise A+是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。promise实现了Promise A+规范，包装了java中对多线程的操作，提供统一的接口，使得控制异步操作更加容易。实现过程中参考文档如下：
+* [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)
+* [ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise)     
+
+基本使用：
 ```java
-ExecutorService pool = Promise.pool(1);
-IPromise promiseA = new Promise.Builder().pool(pool).promiseHanler(executor -> {
-    //PromiseA的业务逻辑
-    Random random = new Random();
-    int i=0;
-    while (i<3){
-        i++;
-        System.out.println(random.nextInt(100));
-        Thread.sleep(100);
+IPromise promise = new Promise.Builder().promiseHanler(new PromiseHandler() {
+    @Override
+    public Object run(PromiseExecutor executor) throws Exception {
+        return 2*3;
     }
-    return random.nextInt(100);
 }).build();
-promiseA.then(resultA -> {//PromiseA的成功回调
-    //在promiseA的回调中创建PromiseB
-    IPromise promiseB = new Promise.Builder().pool(pool).externalInput(resultA)
-            .promiseHanler(executor -> {
-                //promiseB的业务逻辑
-                String bResult = "b:"+executor.getExternalInput();
-                return bResult;
-            }).build();
-    //返回PromiseB
-    return promiseB;
-}).then(resultB -> {//PromiseB的成功回调
-    System.out.println(resultB);
-    return resultB;
-}).pCatch(e->{//捕获PromiseA和PromiseB的异常
-    e.printStackTrace();
-    return null;
+
+```
+上面的例子中创建了一个promise对象，指定PromiseHandler实现，在run方法中写具体的业务逻辑，类似于Runable的run方法。promise对象一经创建，将立即异步执行。推荐使用lambda表达式，更加简洁。
+```java
+IPromise promise = new Promise.Builder().promiseHanler(executor -> {
+    return 2*3;
+}).build();
+```
+获取promise的执行结果通常使用两个方法`then`和`listen`，前者是阻塞的后者是非阻塞的。then方法返回一个新的promise对象，因此支持链式调用。
+```java
+new Promise.Builder().promiseHanler(executor -> {//promise0
+    return 2*3;
+}).build().then(resolvedData -> {//返回一个新的promise1
+    System.out.println(resolvedData);
+    return (Integer)resolvedData+1;
+}).then(res2->{
+    System.out.println(res2);
+    //创建一个新的promise2并返回
+    return new Promise.Builder().externalInput(res2).promiseHanler(executor -> {
+        return (Integer)executor.getExternalInput()+2;
+    });
+}).then(res3->{
+    System.out.println(res3);
+    return res3;
 });
-pool.shutdown();
-System.out.println("主程序结束了");
 ```
-打印结果如下
-```
-65
-97
-85
-b:24
-主程序结束了
-```
-从上面可以看到PromiseA和PromiseB是链式调用的，在promiseA的回调中创建并返回了promiseB，但是promiseB的回调是在外层调用的，假如需要顺序执行a->b-c->d四个线程，调用顺序如下
+
+
+从上面可以看到promise0、promise1和Promise2是链式调用的，每一次then方法都返回一个新的promise。在then方法的回调中，如果返回的是一个非promise对象，那么promise被认为是一个fulfilled状态的promise，如果返回的是一个promsie实例，那么该实例将会异步执行。   
+假如需要异步顺序执行a->b-c->d四个线程，调用顺序如下
 ```
 new PromiseA()
 .then(dataA->new PromiseB())//A的回调
@@ -176,7 +117,7 @@ Promise是IPromise的实现，Promise实例一经创建，将立即异步执行�
      * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
      * 如果执行回调过程中产生异常e,返回一个以e作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch。
 *    如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
-              参数：
+                    参数：
 ##### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
 then(null,onRejectedExecutor)的别名，但返回不同于then，出现异常时可以选择不拒绝接下来Promise的执行，可用于异常修正，类似于try{}catch{}   
 该方法会尝试捕获当前promise的异常,最终返回一个新Promise,当被捕获Promise处于不同的状态时有不同的行为

@@ -15,7 +15,23 @@ import java.util.concurrent.ExecutorService;
  */
 public class App {
     public static void main(String[] args){
-        test3();
+        test8();
+    }
+    public static void test8(){
+        IPromise promise = new Promise.Builder().promiseHanler(executor -> {
+            return 2*3;
+        }).build().then(resolvedData -> {
+            System.out.println(resolvedData);
+            return (Integer)resolvedData+1;
+        }).then(res2->{
+            System.out.println(res2);
+            return new Promise.Builder().externalInput(res2).promiseHanler(executor -> {
+                return (Integer)executor.getExternalInput()+2;
+            });
+        }).then(res3->{
+            System.out.println(res3);
+            return res3;
+        });
     }
     public static void test7(){
         ExecutorService pool = Promise.pool(1);
