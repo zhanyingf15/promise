@@ -4,6 +4,21 @@ java promise是Promise A+规范的java实现版本。Promise A+是commonJs规范
 * [ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise)     
 
 基本使用：
+```xml
+<repositories>
+    <repository>
+      <id>wjj-maven-repo</id>
+      <url>https://raw.github.com/zhanyingf15/maven-repo/master</url>
+    </repository>
+</repositories>
+```
+```xml
+<dependency>
+  <groupId>com.wjj</groupId>
+  <artifactId>promise</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
 ```java
 IPromise promise = new Promise.Builder().promiseHanler(new PromiseHandler() {
     @Override
@@ -31,7 +46,7 @@ new Promise.Builder().promiseHanler(executor -> {//promise0
     //创建一个新的promise2并返回
     return new Promise.Builder().externalInput(res2).promiseHanler(executor -> {
         return (Integer)executor.getExternalInput()+2;
-    });
+    }).build();
 }).then(res3->{
     System.out.println(res3);
     return res3;
@@ -117,7 +132,7 @@ Promise是IPromise的实现，Promise实例一经创建，将立即异步执行�
      * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
      * 如果执行回调过程中产生异常e,返回一个以e作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch。
 *    如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
-                    参数：
+                          参数：
 ##### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
 then(null,onRejectedExecutor)的别名，但返回不同于then，出现异常时可以选择不拒绝接下来Promise的执行，可用于异常修正，类似于try{}catch{}   
 该方法会尝试捕获当前promise的异常,最终返回一个新Promise,当被捕获Promise处于不同的状态时有不同的行为

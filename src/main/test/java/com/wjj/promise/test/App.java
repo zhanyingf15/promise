@@ -27,7 +27,7 @@ public class App {
             System.out.println(res2);
             return new Promise.Builder().externalInput(res2).promiseHanler(executor -> {
                 return (Integer)executor.getExternalInput()+2;
-            });
+            }).build();
         }).then(res3->{
             System.out.println(res3);
             return res3;

@@ -9,7 +9,7 @@ import java.util.List;
  * @author wangjiajun
  */
 public class ThenTest {
-    public Integer then(int a,int b){
+    public Integer then(Integer a,Integer b){
         System.out.println(Thread.currentThread().getName());
         return a+b;
     }
