@@ -127,7 +127,7 @@ public class Promise extends AbstractPromise {
                 return finalPromise(e,false);
             }
         }else {
-            //阻塞线程，等待异步任务完成
+            //TODO 阻塞线程，等待异步任务完成，换成get方法阻塞
             lockThis();
             return then(onFulfilledExecutor,onRejectedExecutor);
         }
@@ -251,7 +251,7 @@ public class Promise extends AbstractPromise {
          * 向Promise注入一个外部参数，可以在指定PromiseHandler时通过PromiseExecutor.getExternalInput()获取<br/>
          * <pre>
          *   int i = 3;
-         *   IPromise p = new Promise.Builder().externalInput(i).promiseHanler(new PromiseHandler() {
+         *   IPromise p = new Promise.Builder().externalInput(i).promiseHandler(new PromiseHandler() {
          *       public Object run(PromiseExecutor executor) {
          *           Integer args = (Integer) executor.getExternalInput();
          *           executor.resolve(args*2);
@@ -272,7 +272,7 @@ public class Promise extends AbstractPromise {
          * @param promiseExecutor
          * @return
          */
-        public Builder promiseHanler(PromiseHandler promiseExecutor){
+        public Builder promiseHandler(PromiseHandler promiseExecutor){
             this.promise.promiseHandler = promiseExecutor;
             this.promise.promiseExecutor = new PromiseExecutor(this.promise);
             return this;
@@ -300,8 +300,8 @@ public class Promise extends AbstractPromise {
          * <li>如果 x 处于拒绝态，用相同的据因拒绝当前promise执行</li>
          * <pre>
          *ExecutorService fixedPool = Promise.pool(1);
-          IPromise promise1 = new Promise.Builder().pool(fixedPool).promiseHanler(executor->3).build();
-          IPromise promise2 = new Promise.Builder().pool(fixedPool).promise(promise1).promiseHanler(executor->4+(Integer) executor.getPromiseInput())
+          IPromise promise1 = new Promise.Builder().pool(fixedPool).promiseHandler(executor->3).build();
+          IPromise promise2 = new Promise.Builder().pool(fixedPool).promise(promise1).promiseHandler(executor->4+(Integer) executor.getPromiseInput())
             .build()
             .then(resolvedData->{
                 System.out.println(resolvedData);
@@ -362,7 +362,7 @@ public class Promise extends AbstractPromise {
                 lock.unlock();
             });
         }
-
+        //TODO 后续修改，不应该阻塞当前线程
         lock.lock();
         try {
             while (!PromiseUtil.isAllDone(promises)){
@@ -473,7 +473,7 @@ public class Promise extends AbstractPromise {
         }
         try {
             Method method = object.getClass().getMethod(methodName,cls);
-            return new Promise.Builder().promiseHanler(executor -> method.invoke(object,args.toArray())).build();
+            return new Promise.Builder().promiseHandler(executor -> method.invoke(object,args.toArray())).build();
         } catch (NoSuchMethodException e) {
             return new Promise.Builder().finalPromise(e,false).build();
         }
