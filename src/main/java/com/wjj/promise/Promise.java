@@ -127,7 +127,6 @@ public class Promise extends AbstractPromise {
                 return finalPromise(e,false);
             }
         }else {
-            //TODO 阻塞线程，等待异步任务完成，换成get方法阻塞
             lockThis();
             return then(onFulfilledExecutor,onRejectedExecutor);
         }
@@ -362,7 +361,6 @@ public class Promise extends AbstractPromise {
                 lock.unlock();
             });
         }
-        //TODO 后续修改，不应该阻塞当前线程
         lock.lock();
         try {
             while (!PromiseUtil.isAllDone(promises)){
@@ -421,7 +419,7 @@ public class Promise extends AbstractPromise {
             while (PromiseUtil.getFinal(promises)!=null){
                 condition.await();
             }
-            finalPromise = PromiseUtil.getFirstRejected(promises);
+            finalPromise = PromiseUtil.getFinal(promises);
             PromiseUtil.cancel(promises);
             return PromiseUtil.cloneFinal(finalPromise);
         }catch (Exception e){
