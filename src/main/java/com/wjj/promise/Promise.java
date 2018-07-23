@@ -5,9 +5,12 @@ import com.wjj.promise.then.OnCatchedExecutor;
 import com.wjj.promise.then.OnCompleteListener;
 import com.wjj.promise.then.OnFulfilledExecutor;
 import com.wjj.promise.then.OnRejectedExecutor;
+import com.wjj.promise.util.PromiseCountDownLatch;
 import com.wjj.promise.util.PromiseUtil;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,8 +29,6 @@ public class Promise extends AbstractPromise {
     private Set<OnCompleteListener> onCompleteListenerSet = new HashSet<>();
 
     private ExecutorService threadPool;
-    protected Lock lock = new ReentrantLock();
-    protected Condition condition = lock.newCondition();
 
     private Object externalInput;
     private Object promiseInput;
@@ -72,30 +73,24 @@ public class Promise extends AbstractPromise {
         }
     }
     @Override
-     public Object call() throws Exception {
-        lock.lock();
-        try {
-            if(this.getStatus().equals(Status.PENDING)){
-                try{
-                    //执行具体的方法
-                    final Object result = this.promiseHandler.run(this.promiseExecutor);
-                    //直接返回数据，没有调用resolve
-                    if(this.getStatus().equals(Status.PENDING)){
-                        this.transferStatus(Status.FULFILLED,result);
-                    }
-                }catch (Exception e){
-                    this.transferStatus(Status.REJECTED,e);
+     public Object call(){
+        if(this.getStatus().equals(Status.PENDING)){
+            try{
+                //执行具体的方法
+                final Object result = this.promiseHandler.run(this.promiseExecutor);
+                //直接返回数据，没有调用resolve
+                if(this.getStatus().equals(Status.PENDING)){
+                    this.transferStatus(Status.FULFILLED,result);
                 }
+            }catch (Exception e){
+                this.transferStatus(Status.REJECTED,e);
             }
-            //调用监听
-            if(this.onCompleteListenerSet !=null){
-                this.onCompleteListenerSet.forEach(listener->listener.listen(this.getResolvedData(),this.getRejectedData()));
-            }
-            return this.getStatus().equals(Status.FULFILLED)?this.getResolvedData():this.getRejectedData();
-        }finally {
-            condition.signalAll();
-            lock.unlock();
         }
+        //调用监听
+        if(this.onCompleteListenerSet !=null){
+            this.onCompleteListenerSet.forEach(listener->listener.listen(this.getResolvedData(),this.getRejectedData()));
+        }
+        return this.getStatus().equals(Status.FULFILLED)?this.getResolvedData():this.getRejectedData();
     }
     @Override
     public IPromise then(OnFulfilledExecutor onFulfilledExecutor){
@@ -103,33 +98,30 @@ public class Promise extends AbstractPromise {
     }
     @Override
     public IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor){
-        if(!this.getStatus().equals(Status.PENDING)){
-            try {
-                if(this.getStatus().equals(Status.FULFILLED)){
-                    if(onFulfilledExecutor!=null){
-                        //调用回调
-                        Object r = onFulfilledExecutor.onFulfilled(this.getResolvedData());
-                        if(r instanceof IPromise){
-                            return (IPromise)r;
-                        }else{
-                            return finalPromise(r,true);
-                        }
+        try {
+            if(this.getStatus().equals(Status.PENDING)){
+                this.future.get();
+            }
+            if(this.getStatus().equals(Status.FULFILLED)){
+                if(onFulfilledExecutor!=null){
+                    //调用回调
+                    Object r = onFulfilledExecutor.onFulfilled(this.getResolvedData());
+                    if(r instanceof IPromise){
+                        return (IPromise)r;
                     }else{
-                        return finalPromise(this.getResolvedData(),true);
+                        return finalPromise(r,true);
                     }
                 }else{
-                    if(onRejectedExecutor != null){
-                        onRejectedExecutor.onRejected(this.getRejectedData());
-                    }
-                    return finalPromise(this.getRejectedData(),false);
+                    return finalPromise(this.getResolvedData(),true);
                 }
-            }catch (Exception e){
-                return finalPromise(e,false);
+            }else{
+                if(onRejectedExecutor != null){
+                    onRejectedExecutor.onRejected(this.getRejectedData());
+                }
+                return finalPromise(this.getRejectedData(),false);
             }
-        }else {
-            //TODO 阻塞线程，等待异步任务完成，换成get方法阻塞
-            lockThis();
-            return then(onFulfilledExecutor,onRejectedExecutor);
+        }catch (Exception e){
+            return finalPromise(e,false);
         }
     }
     @Override
@@ -149,42 +141,23 @@ public class Promise extends AbstractPromise {
     @Override
     public IPromise pCatch(OnCatchedExecutor onCatchedExecutor){
         try {
-            if(!this.getStatus().equals(Status.PENDING)){
-                if(this.getStatus().equals(Status.REJECTED)){
-                    if(onCatchedExecutor!=null){
-                        Object r = onCatchedExecutor.onCatched(this.getRejectedData());
-                        if(r instanceof IPromise){
-                            return (IPromise)r;
-                        }else{
-                            return finalPromise(r,true);
-                        }
-                    }
-                    return finalPromise(this.getRejectedData(),false);
-                }
-                return finalPromise(this.getResolvedData(),true);
-            }else{
-                //阻塞线程
-                lockThis();
-                return pCatch(onCatchedExecutor);
+            if(this.getStatus().equals(Status.PENDING)){
+                this.future.get();
             }
+            if(this.getStatus().equals(Status.REJECTED)){
+                if(onCatchedExecutor!=null){
+                    Object r = onCatchedExecutor.onCatched(this.getRejectedData());
+                    if(r instanceof IPromise){
+                        return (IPromise)r;
+                    }else{
+                        return finalPromise(r,true);
+                    }
+                }
+                return finalPromise(this.getRejectedData(),false);
+            }
+            return finalPromise(this.getResolvedData(),true);
         }catch (Exception e){
             return finalPromise(e,false);
-        }
-    }
-
-    /**
-     * 阻塞当前线程
-     */
-    private void lockThis(){
-        lock.lock();
-        try {
-            while (this.getStatus().equals(Status.PENDING)){
-                this.condition.await();
-            }
-        }catch (Exception e){
-            this.transferStatus(Status.REJECTED,e);
-        }finally {
-            lock.unlock();
         }
     }
 
@@ -243,7 +216,9 @@ public class Promise extends AbstractPromise {
          * @return
          */
         public Builder pool(ExecutorService threadPool){
-            this.promise.threadPool = threadPool;
+            if(threadPool!=null){
+                this.promise.threadPool = threadPool;
+            }
             return this;
         }
 
@@ -320,15 +295,6 @@ public class Promise extends AbstractPromise {
             if(this.promise.getStatus().equals(Status.PENDING)){
                 this.promise.executePromise(this.otherPromise);
             }
-            /*Class[] pInterface = new Class[]{IPromise.class};
-            IPromise proxyPromise = (IPromise)Proxy.newProxyInstance(this.promise.getClass().getClassLoader(),pInterface, (proxy, method, args) ->{
-                if("then".equals(method.getName())){
-                    System.out.println("执行拦截");
-                    return method.invoke(this.promise, args);
-                }
-                return method.invoke(this.promise, args);
-            });
-            return proxyPromise;*/
             return this.promise;
         }
     }
@@ -340,7 +306,19 @@ public class Promise extends AbstractPromise {
      * @param promises promise数组
      * @return IPromise
      */
-    public static IPromise all(IPromise ...promises){
+    public static IPromise all(final IPromise ...promises){
+        return all(null,promises);
+    }
+    /**
+     * 将多个 Promise 实例p1,...pn，包装成一个新的 Promise 实例 p,只有当p1-pn的状态都转为fulfilled时，p的状态才为fulfilled，此时
+     * p1-pn的返回值为一个数组Object[r1,...rn]作为p的终值。<br/>
+     * 只要p1-pn中任意一个被rejected，p的状态就转为rejected，将第一个被rejected的promise的拒因作为p的拒因，并尝试取消其余promise的执行(内部调用future.cancel(true))
+     * @param threadPool 线程池,指定新的实例 p的运行环境，为null时会为实例 p开启一个新线程。
+     *                   线程池的容量最好比promises长度大1，避免实例p处于队列等待
+     * @param promises promise数组
+     * @return IPromise
+     */
+    public static IPromise all(ExecutorService threadPool,final IPromise ...promises){
         if(promises==null){
             return new Promise.Builder().finalPromise(null,true).build();
         }
@@ -352,38 +330,32 @@ public class Promise extends AbstractPromise {
             PromiseUtil.cancel(promises);
             return new Promise.Builder().finalPromise(rejectedPromise.getRejectedData(),false).build();
         }
-        Lock lock = new ReentrantLock();
-        Condition condition = lock.newCondition();
-        for(int i=0;i<promises.length;i++){
-            IPromise p = promises[i];
-            p.listen((resolvedData, throwable) -> {
-                lock.lock();
-                condition.signalAll();
-                lock.unlock();
-            });
-        }
-        //TODO 后续修改，不应该阻塞当前线程
-        lock.lock();
-        try {
-            while (!PromiseUtil.isAllDone(promises)){
-                condition.await();
-                rejectedPromise = PromiseUtil.getFirstRejected(promises);
-                if(rejectedPromise!=null){
-                    PromiseUtil.cancel(promises);
-                    return new Promise.Builder().finalPromise(rejectedPromise.getRejectedData(),false).build();
+        return new Promise.Builder().promiseHandler(handler->{
+            final PromiseCountDownLatch counter = new PromiseCountDownLatch(promises.length);
+            for(IPromise p:promises){
+                p.listen((resolvedData, throwable) -> {
+                    if(throwable!=null){
+                        counter.countDownAll();
+                    }else{
+                        counter.countDown();
+                    }
+                });
+            }
+            counter.await();
+            IPromise rejectedPromise2 = PromiseUtil.getFirstRejected(promises);
+            if(rejectedPromise2!=null){
+                PromiseUtil.cancel(promises);
+                handler.reject(rejectedPromise2.getRejectedData());
+            }else{
+                final Object[] datas = new Object[promises.length];
+                for(int i=0;i<promises.length;i++){
+                    IPromise p = promises[i];
+                    datas[i] = p.getResolvedData();
                 }
+                handler.resolve(datas);
             }
-            final Object[] datas = new Object[promises.length];
-            for(int i=0;i<promises.length;i++){
-                IPromise p = promises[i];
-                datas[i] = p.getResolvedData();
-            }
-            return new Promise.Builder().finalPromise(datas,true).build();
-        }catch (Exception e){
-            return new Promise.Builder().finalPromise(e,false).build();
-        }finally {
-            lock.unlock();
-        }
+            return null;
+        }).pool(threadPool).build();
     }
 
     /**
@@ -405,30 +377,21 @@ public class Promise extends AbstractPromise {
             PromiseUtil.cancel(promises);
             return PromiseUtil.cloneFinal(finalPromise);
         }
-        Lock lock = new ReentrantLock();
-        Condition condition = lock.newCondition();
-        for(int i=0;i<promises.length;i++){
-            IPromise p = promises[i];
-            p.listen((resolvedData, throwable) -> {
-                lock.lock();
-                condition.signalAll();
-                lock.unlock();
-            });
-        }
-
-        lock.lock();
-        try {
-            while (PromiseUtil.getFinal(promises)!=null){
-                condition.await();
+        return new Promise.Builder().promiseHandler(handler->{
+            final PromiseCountDownLatch counter = new PromiseCountDownLatch(promises.length);
+            for(IPromise p:promises){
+                p.listen((resolvedData, throwable) -> counter.countDownAll());
             }
-            finalPromise = PromiseUtil.getFirstRejected(promises);
+            counter.await();
+            IPromise finalPromise2 = PromiseUtil.getFinal(promises);
             PromiseUtil.cancel(promises);
-            return PromiseUtil.cloneFinal(finalPromise);
-        }catch (Exception e){
-            return new Promise.Builder().finalPromise(e,false).build();
-        }finally {
-            lock.unlock();
-        }
+            if(Status.FULFILLED.equals(finalPromise2.getStatus())){
+                handler.resolve(finalPromise2.getResolvedData());
+            }else{
+                handler.reject(finalPromise2.getRejectedData());
+            }
+            return null;
+        }).build();
     }
 
     /**

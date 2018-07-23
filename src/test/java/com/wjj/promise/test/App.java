@@ -15,17 +15,43 @@ import java.util.concurrent.ExecutorService;
  */
 public class App {
     public static void main(String[] args){
-        test8();
+        test0();
+    }
+    public static void test9(){
+        IPromise p1 = new Promise.Builder().promiseHandler(executor -> {
+            Thread.sleep(2000);
+            System.out.println("p1执行完成");
+            return 1;
+        }).build();
+        IPromise p2 = new Promise.Builder().promiseHandler(executor -> {
+            int a = 0;
+            while (!Thread.currentThread().isInterrupted()){
+                Thread.sleep(3000);
+            }
+            System.err.println("p2任务被取消");
+            return 2;
+        }).build();
+        IPromise p3 = new Promise.Builder().promiseHandler(executor -> {
+            Thread.sleep(1000);
+            System.out.println("p3执行完成");
+            return 3;
+        }).build();
+        long s = System.currentTimeMillis();
+        Promise.race(p1,p2,p3).then(resolvedData -> {
+            System.out.println("resolvedData:"+resolvedData);
+            return null;
+        },e->e.printStackTrace());
+        System.out.println("耗时："+(System.currentTimeMillis()-s));
     }
     public static void test8(){
-        IPromise promise = new Promise.Builder().promiseHanler(executor -> {
+        IPromise promise = new Promise.Builder().promiseHandler(executor -> {
             return 2*3;
         }).build().then(resolvedData -> {
             System.out.println(resolvedData);
             return (Integer)resolvedData+1;
         }).then(res2->{
             System.out.println(res2);
-            return new Promise.Builder().externalInput(res2).promiseHanler(executor -> {
+            return new Promise.Builder().externalInput(res2).promiseHandler(executor -> {
                 return (Integer)executor.getExternalInput()+2;
             }).build();
         }).then(res3->{
@@ -33,9 +59,10 @@ public class App {
             return res3;
         });
     }
+    /**测试两个线程A、B先后执行*/
     public static void test7(){
         ExecutorService pool = Promise.pool(1);
-        IPromise promiseA = new Promise.Builder().pool(pool).promiseHanler(executor -> {
+        IPromise promiseA = new Promise.Builder().pool(pool).promiseHandler(executor -> {
             Random random = new Random();
             int i=0;
             while (i<3){
@@ -47,7 +74,7 @@ public class App {
         }).build();
         promiseA.then(resultA -> {
             IPromise promiseB = new Promise.Builder().pool(pool).externalInput(resultA)
-                    .promiseHanler(executor -> {
+                    .promiseHandler(executor -> {
                         String bResult = "b:"+executor.getExternalInput();
                         return bResult;
                     }).build();
@@ -62,10 +89,11 @@ public class App {
         pool.shutdown();
         System.out.println("主程序结束了");
     }
+    /**all测试某个promise发生异常,取消线程*/
     public static void test6(){
         Map<String,Boolean> p1Flag = new HashMap<>();
         p1Flag.put("flag",true);
-        IPromise p1 = new Promise.Builder().externalInput(p1Flag).promiseHanler(executor -> {
+        IPromise p1 = new Promise.Builder().externalInput(p1Flag).promiseHandler(executor -> {
             while (((Map<String,Boolean>)executor.getExternalInput()).get("flag")){
                 //do something
                 System.out.println("p1 正在执行任务");
@@ -73,14 +101,14 @@ public class App {
             System.out.println("p1任务完成，正常结束");
             return 1;
         }).build();
-        IPromise p2 = new Promise.Builder().promiseHanler(executor -> {
+        IPromise p2 = new Promise.Builder().promiseHandler(executor -> {
             while (!Thread.currentThread().isInterrupted()){
                 System.out.println("执行p2正常逻辑");
             }
             System.err.println("p2线程被取消");
             return 2;
         }).build();
-        IPromise p3 = new Promise.Builder().promiseHanler(executor -> {
+        IPromise p3 = new Promise.Builder().promiseHandler(executor -> {
             Thread.sleep(10);
             throw new RuntimeException("p3抛出异常");
         }).build();
@@ -96,16 +124,17 @@ public class App {
         System.out.println("耗时："+(System.currentTimeMillis()-s));
         p1Flag.put("flag",false);
     }
+    /**测试all*/
     public static void test5(){
-        IPromise p1 = new Promise.Builder().promiseHanler(executor -> {
+        IPromise p1 = new Promise.Builder().promiseHandler(executor -> {
             Thread.sleep(1000);
             return 1;
         }).build();
-        IPromise p2 = new Promise.Builder().promiseHanler(executor -> {
+        IPromise p2 = new Promise.Builder().promiseHandler(executor -> {
             Thread.sleep(4000);
             return 2;
         }).build();
-        IPromise p3 = new Promise.Builder().promiseHanler(executor -> {
+        IPromise p3 = new Promise.Builder().promiseHandler(executor -> {
             Thread.sleep(2000);
             return 3;
         }).build();
@@ -119,8 +148,9 @@ public class App {
         },e->e.printStackTrace());
         System.out.println("耗时："+(System.currentTimeMillis()-s));
     }
+    /**测试异常处理*/
     public static void test4(){
-        new Promise.Builder().promiseHanler(executor -> 0).build()
+        new Promise.Builder().promiseHandler(executor -> 0).build()
           .then(res0->{
             System.out.println("a:"+res0);
             Thread.sleep(100);
@@ -143,9 +173,9 @@ public class App {
         });
     }
     public static void test3(){
-        new Promise.Builder().promiseHanler(executor -> 3).build().then(resolvedData->{
+        new Promise.Builder().promiseHandler(executor -> 3).build().then(resolvedData->{
             System.out.println("a:"+resolvedData);
-            return new Promise.Builder().promiseHanler(executor -> {
+            return new Promise.Builder().promiseHandler(executor -> {
                 executor.reject(new RuntimeException("err"));
                 return null;
             }).build();
@@ -158,8 +188,8 @@ public class App {
     }
     public static void test2(){
         ExecutorService fixedPool = Promise.pool(1);
-        IPromise promise1 = new Promise.Builder().pool(fixedPool).promiseHanler(executor->3).build();
-        IPromise promise2 = new Promise.Builder().pool(fixedPool).promiseHanler(executor->4+(Integer) executor.getPromiseInput())
+        IPromise promise1 = new Promise.Builder().pool(fixedPool).promiseHandler(executor->3).build();
+        IPromise promise2 = new Promise.Builder().pool(fixedPool).promiseHandler(executor->4+(Integer) executor.getPromiseInput())
                 .promise(promise1)
                 .build()
                 .then(resolvedData->{
@@ -170,7 +200,7 @@ public class App {
         fixedPool.shutdown();
     }
     public static void test1(){
-        new Promise.Builder().promiseHanler(new PromiseHandler(){
+        new Promise.Builder().promiseHandler(new PromiseHandler(){
             @Override
             public Object run(PromiseExecutor executor) {
                 executor.resolve(3);
@@ -181,7 +211,7 @@ public class App {
             public Object onFulfilled(Object resolvedData) {
                 Integer i = ((Integer)resolvedData)+1;
                 System.out.println(i);
-                IPromise p = new Promise.Builder().externalInput(i).promiseHanler(new PromiseHandler() {
+                IPromise p = new Promise.Builder().externalInput(i).promiseHandler(new PromiseHandler() {
                     @Override
                     public Object run(PromiseExecutor executor) {
                         Integer args = (Integer) executor.getExternalInput();
@@ -204,5 +234,22 @@ public class App {
                 rejectedReason.printStackTrace();
             }
         });
+    }
+    public static void test0(){
+        IPromise p = new Promise.Builder().promiseHandler(handler->{
+            int a = 0;
+            while (a<=5){
+                System.out.println("a:"+a);
+                Thread.sleep(1000);
+                a++;
+            }
+            return a;
+        }).build();
+        System.out.println("promise已创建");
+        p.then(resolvedData -> {
+            System.out.println("resolvedData:"+resolvedData);
+            return null;
+        });
+        System.out.println("运行结束");
     }
 }
