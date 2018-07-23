@@ -366,6 +366,18 @@ public class Promise extends AbstractPromise {
      * @return
      */
     public static IPromise race(IPromise ...promises){
+        return race(null,promises);
+    }
+    /**
+     * 将多个 Promise p1,...pn实例，包装成一个新的 Promise 实例 p，只要p1-pn有一个状态发生改变，p的状态立即改变
+     * 并尝试取消其余promise的执行(内部调用future.cancel(true))<br/>
+     * 第一个改变的promise的状态和数据作为p的状态和数据
+     * @param threadPool 线程池,指定新的实例 p的运行环境，为null时会为实例 p开启一个新线程。
+     *                   线程池的容量最好比promises长度大1，避免实例p处于队列等待
+     * @param promises
+     * @return
+     */
+    public static IPromise race(ExecutorService threadPool,IPromise ...promises){
         if(promises==null){
             return new Promise.Builder().finalPromise(null,true).build();
         }
@@ -391,7 +403,7 @@ public class Promise extends AbstractPromise {
                 handler.reject(finalPromise2.getRejectedData());
             }
             return null;
-        }).build();
+        }).pool(threadPool).build();
     }
 
     /**
