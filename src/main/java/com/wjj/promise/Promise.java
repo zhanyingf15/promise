@@ -300,18 +300,15 @@ public class Promise extends AbstractPromise {
     }
 
     /**
-     * 将多个 Promise 实例p1,...pn，包装成一个新的 Promise 实例 p,只有当p1-pn的状态都转为fulfilled时，p的状态才为fulfilled，此时
-     * p1-pn的返回值为一个数组Object[r1,...rn]作为p的终值。<br/>
-     * 只要p1-pn中任意一个被rejected，p的状态就转为rejected，将第一个被rejected的promise的拒因作为p的拒因，并尝试取消其余promise的执行(内部调用future.cancel(true))
-     * @param promises promise数组
+     * 参考 waitAll {@link com.wjj.promise.Promise#all(ExecutorService threadPool, IPromise[] promises)}
      * @return IPromise
      */
     public static IPromise all(final IPromise ...promises){
         return all(null,promises);
     }
     /**
-     * 将多个 Promise 实例p1,...pn，包装成一个新的 Promise 实例 p,只有当p1-pn的状态都转为fulfilled时，p的状态才为fulfilled，此时
-     * p1-pn的返回值为一个数组Object[r1,...rn]作为p的终值。<br/>
+     * 将多个 Promise 实例p1,...pn，包装成一个新的 Promise 实例 p,只有当p1-pn的状态都转为fulfilled时，p的状态才为fulfilled，将
+     * p1-pn的终值包装为一个数组Object[r1,...rn]作为p的终值。<br/>
      * 只要p1-pn中任意一个被rejected，p的状态就转为rejected，将第一个被rejected的promise的拒因作为p的拒因，并尝试取消其余promise的执行(内部调用future.cancel(true))
      * @param threadPool 线程池,指定新的实例 p的运行环境，为null时会为实例 p开启一个新线程。
      *                   线程池的容量最好比promises长度大1，避免实例p处于队列等待
@@ -359,10 +356,50 @@ public class Promise extends AbstractPromise {
     }
 
     /**
-     * 将多个 Promise p1,...pn实例，包装成一个新的 Promise 实例 p，只要p1-pn有一个状态发生改变，p的状态立即改变
-     * 并尝试取消其余promise的执行(内部调用future.cancel(true))<br/>
-     * 第一个改变的promise的状态和数据作为p的状态和数据
-     * @param promises
+     * 参考 waitAll {@link com.wjj.promise.Promise#waitAll(ExecutorService threadPool, IPromise[] promises)}
+     * @return IPromise
+     */
+    public static IPromise waitAll(final IPromise ...promises){
+        return waitAll(null,promises);
+    }
+    /**
+     * 将多个 Promise 实例p1,...pn，包装成一个新的 Promise 实例 p,等待p1-pn的状态全部转为fulfilled或rejected，p的状态转为fulfilled，将
+     * p1-pn的终值包装为一个数组Object[r1,...rn]作为p的终值。r1...rn的值取决于p1...pn的最终状态<br/>
+     * 假如p2异常结束，那么r2为一个throwable实例<br/>
+     * ，不同于all，即便只要p1-pn中任意一个被rejected，p都会等待全部的promise执行完成
+     * @param threadPool 线程池,指定新的实例 p的运行环境，为null时会为实例 p开启一个新线程。
+     *                   线程池的容量最好比promises长度大1，避免实例p处于队列等待
+     * @param promises promise数组
+     * @return IPromise
+     */
+    public static IPromise waitAll(ExecutorService threadPool,final IPromise ...promises){
+        if(promises==null){
+            return new Promise.Builder().finalPromise(null,true).build();
+        }
+        if(promises.length==0){
+            return new Promise.Builder().finalPromise(new Object[0],true).build();
+        }
+        return new Promise.Builder().promiseHandler(handler->{
+            final PromiseCountDownLatch counter = new PromiseCountDownLatch(promises.length);
+            for(IPromise p:promises){
+                p.listen((resolvedData, throwable) -> {
+                    counter.countDown();
+                });
+            }
+            counter.await();
+            final Object[] datas = new Object[promises.length];
+            for(int i=0;i<promises.length;i++){
+                IPromise p = promises[i];
+                datas[i] = Status.FULFILLED.equals(p.getStatus())?p.getResolvedData():p.getRejectedData();
+            }
+            return datas;
+        }).pool(threadPool).build();
+
+    }
+
+
+    /**
+     * 参考 waitAll {@link com.wjj.promise.Promise#race(ExecutorService threadPool, IPromise[] promises)}
      * @return
      */
     public static IPromise race(IPromise ...promises){
@@ -371,7 +408,7 @@ public class Promise extends AbstractPromise {
     /**
      * 将多个 Promise p1,...pn实例，包装成一个新的 Promise 实例 p，只要p1-pn有一个状态发生改变，p的状态立即改变
      * 并尝试取消其余promise的执行(内部调用future.cancel(true))<br/>
-     * 第一个改变的promise的状态和数据作为p的状态和数据
+     * 第一个改变的promise的状态和终值作为p的状态和终值
      * @param threadPool 线程池,指定新的实例 p的运行环境，为null时会为实例 p开启一个新线程。
      *                   线程池的容量最好比promises长度大1，避免实例p处于队列等待
      * @param promises
