@@ -35,7 +35,7 @@ public class Promise extends AbstractPromise {
 
     private Future future;
 
-    protected Promise(){}
+    private Promise(){}
     private Future startThread(Callable callable){
         if(this.threadPool !=null){
             this.future = this.threadPool.submit(callable);
@@ -74,11 +74,11 @@ public class Promise extends AbstractPromise {
     }
     @Override
      public Object call(){
-        if(this.getStatus().equals(Status.PENDING)){
+        if(this.getStatus().equals(Status.PENDING)&&null!=this.promiseHandler){
             try{
                 //执行具体的方法
                 final Object result = this.promiseHandler.run(this.promiseExecutor);
-                //直接返回数据，没有调用resolve
+                //如果是直接返回数据，没有调用resolve，转换状态
                 if(this.getStatus().equals(Status.PENDING)){
                     this.transferStatus(Status.FULFILLED,result);
                 }
@@ -244,11 +244,11 @@ public class Promise extends AbstractPromise {
 
         /**
          * 指定promise处理器
-         * @param promiseExecutor
+         * @param promiseHandler
          * @return
          */
-        public Builder promiseHandler(PromiseHandler promiseExecutor){
-            this.promise.promiseHandler = promiseExecutor;
+        public Builder promiseHandler(PromiseHandler promiseHandler){
+            this.promise.promiseHandler = promiseHandler;
             this.promise.promiseExecutor = new PromiseExecutor(this.promise);
             return this;
         }
@@ -292,7 +292,9 @@ public class Promise extends AbstractPromise {
             return this;
         }
         public IPromise build(){
-            if(this.promise.getStatus().equals(Status.PENDING)){
+            if(this.promise.promiseHandler==null){
+                this.promise.transferStatus(Status.FULFILLED,null);
+            }else if(this.promise.getStatus().equals(Status.PENDING)){
                 this.promise.executePromise(this.otherPromise);
             }
             return this.promise;
