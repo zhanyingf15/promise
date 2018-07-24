@@ -401,7 +401,7 @@ public class Promise extends AbstractPromise {
 
 
     /**
-     * 参考 waitAll {@link com.wjj.promise.Promise#race(ExecutorService threadPool, IPromise[] promises)}
+     * 参考 race {@link com.wjj.promise.Promise#race(ExecutorService threadPool, IPromise[] promises)}
      * @return
      */
     public static IPromise race(IPromise ...promises){
