@@ -16,7 +16,7 @@ java promise是Promise A+规范的java实现版本。Promise A+是commonJs规范
 <dependency>
   <groupId>com.wjj</groupId>
   <artifactId>promise</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 ```java

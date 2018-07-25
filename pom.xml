@@ -12,7 +12,7 @@
 	<distributionManagement>
 		<repository>
 			<id>wjj-maven-repo</id>
-			<url>file:D:/wjj/github/maven-repo</url>
+			<url>file:E:/wjj/github/maven-repo</url>
 		</repository>
 	</distributionManagement>
 	<dependencies>
@@ -64,6 +64,22 @@
 						<configuration>
 							<outputDirectory>${project.build.directory}/lib</outputDirectory>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<attach>true</attach>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
