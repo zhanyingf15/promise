@@ -10,10 +10,7 @@ import com.wjj.promise.util.PromiseUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -83,11 +80,14 @@ public class Promise extends AbstractPromise {
                     this.transferStatus(Status.FULFILLED,result);
                 }
             }catch (Exception e){
-                this.transferStatus(Status.REJECTED,e);
+                if(this.getStatus().equals(Status.PENDING)){
+                    this.transferStatus(Status.REJECTED,e);
+                }
             }
         }
+
         //调用监听
-        if(this.onCompleteListenerSet !=null){
+        if(this.onCompleteListenerSet !=null&&this.onCompleteListenerSet.size()>0){
             this.onCompleteListenerSet.forEach(listener->listener.listen(this.getResolvedData(),this.getRejectedData()));
         }
         return this.getStatus().equals(Status.FULFILLED)?this.getResolvedData():this.getRejectedData();
@@ -126,12 +126,14 @@ public class Promise extends AbstractPromise {
     }
     @Override
     public void listen(OnCompleteListener onCompleteListener){
-        this.onCompleteListenerSet.add(onCompleteListener);
         //如果是非pending状态，立即调用监听
         if(this.getStatus().equals(Status.FULFILLED)){
             onCompleteListener.listen(this.getResolvedData(),null);
         }else if(this.getStatus().equals(Status.REJECTED)){
             onCompleteListener.listen(this.getResolvedData(),this.getRejectedData());
+        }else{
+            //pending状态，将监听加入集合
+            this.onCompleteListenerSet.add(onCompleteListener);
         }
     }
     @Override

@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class App {
     public static void main(String[] args){
-        test0();
+        test3();
     }
     public static void test9(){
         IPromise p1 = new Promise.Builder().promiseHandler(executor -> {
@@ -179,11 +179,19 @@ public class App {
                 executor.reject(new RuntimeException("err"));
                 return null;
             }).build();
+        }).pCatch(e->{
+            System.out.println("捕获到异常");
+            return 3;
         }).then(resolvedData1 -> {
             System.out.println("b:"+resolvedData1);
-            return resolvedData1;
+            return "b:"+resolvedData1;
         },rejectReason -> {
             System.err.println("c:"+rejectReason);
+        }).then(resolvedData2 -> {
+            System.out.println("d:"+resolvedData2);
+            return "d:"+resolvedData2;
+        },rejectReason -> {
+            System.err.println("e:"+rejectReason);
         });
     }
     public static void test2(){

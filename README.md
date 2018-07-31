@@ -1,9 +1,8 @@
-### java Promise
-java promise是Promise A+规范的java实现版本。Promise A+是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。promise实现了Promise A+规范，包装了java中对多线程的操作，提供统一的接口，使得控制异步操作更加容易。实现过程中参考文档如下：
+java promise（[GitHub](https://github.com/zhanyingf15/promise)）是Promise A+规范的java实现版本。Promise A+是commonJs规范提出的一种异步编程解决方案，比传统的解决方案—回调函数和事件—更合理和更强大。promise实现了Promise A+规范，包装了java中对多线程的操作，提供统一的接口，使得控制异步操作更加容易。实现过程中参考文档如下：
 * [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)
-* [ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise)     
+* [ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise)   
 
-基本使用：
+基本使用：修改pom.xml
 ```xml
 <repositories>
     <repository>
@@ -16,8 +15,16 @@ java promise是Promise A+规范的java实现版本。Promise A+是commonJs规范
 <dependency>
   <groupId>com.wjj</groupId>
   <artifactId>promise</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.0</version>
 </dependency>
+```
+如果maven settings.xml使用了mirror配置，修改mirrorOf
+```xml
+<mirror>
+  <id>nexus</id>
+  <mirrorOf>*,!wjj-maven-repo</mirrorOf> 
+  <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+</mirror>
 ```
 ```java
 IPromise promise = new Promise.Builder().promiseHanler(new PromiseHandler() {
@@ -26,7 +33,6 @@ IPromise promise = new Promise.Builder().promiseHanler(new PromiseHandler() {
         return 2*3;
     }
 }).build();
-
 ```
 上面的例子中创建了一个promise对象，指定PromiseHandler实现，在run方法中写具体的业务逻辑，类似于Runable的run方法。promise对象一经创建，将立即异步执行。推荐使用lambda表达式，更加简洁。
 ```java
@@ -64,163 +70,201 @@ new PromiseA()
 .then(dataD->xxx)//D的回调
 .pCatch(error->xxxx)//捕获中间可能产生的异常
 ```
-### Docs
-* [java Promise](#java-promise)
-* [Docs](#docs)
-* [promise规范](#promise规范)
-* [Promise](#promise)
-   * [IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)](#ipromise-thenonfulfilledexecutor-onfulfilledexecutor-onrejectedexecutor-onrejectedexecutor)
-   * [IPromise pCatch(OnCatchedExecutor onCatchedExecutor);](#ipromise-pcatchoncatchedexecutor-oncatchedexecutor)
-   * [void listen(OnCompleteListener onCompleteListener);](#void-listenoncompletelistener-oncompletelistener)
-   * [void pFinally(OnCompleteListener onCompleteListener);](#void-pfinallyoncompletelistener-oncompletelistener)
-   * [Status getStatus()](#status-getstatus)
-   * [Object getResolvedData()](#object-getresolveddata)
-   * [Throwable getRejectedData()](#throwable-getrejecteddata)
-   * [Future getFuture()](#future-getfuture)
-   * [boolean cancel()](#boolean-cancel)
-* [Promise.Builder](#promisebuilder)
-   * [Builder pool(ExecutorService threadPool)](#builder-poolexecutorservice-threadpool)
-   * [Builder promiseHanler(PromiseHandler promiseExecutor)](#builder-promisehanlerpromisehandler-promiseexecutor)
-   * [Builder externalInput(Object externalInput)](#builder-externalinputobject-externalinput)
-   * [Builder promise(IPromise promise)](#builder-promiseipromise-promise)
-   * [IPromise build()](#ipromise-build)
-* [Promise的静态方法](#promise的静态方法)
-   * [static IPromise all(IPromise ...promises)](#static-ipromise-allipromise-promises)
-   * [static IPromise race(IPromise ...promises)](#static-ipromise-raceipromise-promises)
-   * [static IPromise resolve()](#static-ipromise-resolve)
-   * [static IPromise resolve(Object object)](#static-ipromise-resolveobject-object)
-   * [static IPromise resolve(Object object,List  args)](#static-ipromise-resolveobject-objectlist--args)
-   * [static IPromise resolve(Object object,String methodName,List  args)](#static-ipromise-resolveobject-objectstring-methodnamelist--args)
-   * [static IPromise reject(Object reason)](#static-ipromise-rejectobject-reason)
-   * [static IPromise pTry(Object object,String methodName,List  args)](#static-ipromise-ptryobject-objectstring-methodnamelist--args)
-* [PromiseHandler](#promisehandler)
-   * [Object run(PromiseExecutor executor)throws Exception;](#object-runpromiseexecutor-executorthrows-exception)
-* [PromiseExecutor](#promiseexecutor)
-   * [void resolve(final Object args)](#void-resolvefinal-object-args)
-   * [void reject(final Throwable args)](#void-rejectfinal-throwable-args)
-   * [Object getExternalInput()](#object-getexternalinput)
-   * [Object getPromiseInput()](#object-getpromiseinput)
-* [OnFulfilledExecutor](#onfulfilledexecutor)
-   * [Object onFulfilled(Object resolvedData)throws Exception;](#object-onfulfilledobject-resolveddatathrows-exception)
-* [OnRejectedExecutor](#onrejectedexecutor)
-   * [void onRejected(Throwable rejectReason)throws Exception;](#void-onrejectedthrowable-rejectreasonthrows-exception)
-* [OnCatchedExecutor](#oncatchedexecutor)
-   * [Object onCatched(Throwable catchReason)throws Exception;](#object-oncatchedthrowable-catchreasonthrows-exception)
-* [OnCompleteListener](#oncompletelistener)
-   * [void listen(Object resolvedData,Throwable e);](#void-listenobject-resolveddatathrowable-e)
-* [示例](#示例)
-   * [示例1：基本使用](#示例1基本使用)
-   * [示例2：promise resolve promise](#示例2promise-resolve-promise)
-   * [示例3：错误处理](#示例3错误处理)
-   * [示例4：pCatch](#示例4pcatch)
-   * [示例5：Promise.all(IPromise ...promises)](#示例5promiseallipromise-promises)
-   * [示例6：线程取消](#示例6线程取消)
-   * [示例7：同步方法异步执行](#示例7同步方法异步执行)   
-
+### DOCS
+docs文档参考[promise wiki](https://github.com/zhanyingf15/promise/wiki)
 #### promise规范
-promise规范可以参考 [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)。其中[ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise) 在Promise A+规范上做了一些补充。java promise在使用上基本与ES6 Promise对象保持一致，部分地方有些许不同，后面会做出说明。
+promise规范可以参考 [Promise A+规范](http://malcolmyu.github.io/malnote/2015/06/12/Promises-A-Plus/#note-4)。其中[ES6 Promise对象](http://es6.ruanyifeng.com/#docs/promise) 在Promise A+规范上做了一些补充。java promise在使用上基本与ES6 Promise对象保持一致，部分地方有些许不同。
 Promise的三个状态
 * pending:等待态，对应线程未执行或执行中
 * fulfilled:完成态，对应线程正常执行完毕，其执行结果称为**终值**
 * rejected:拒绝态，对应线程异常结束，其异常原因称为**拒因**   
-  状态转移只能由pending->fulfilled或pending->rejected，状态一旦发生转移无法再次改变。
-#### Promise
-Promise是IPromise的实现，Promise实例一经创建，将立即异步执行，部分接口如下
-##### IPromise then(OnFulfilledExecutor onFulfilledExecutor, OnRejectedExecutor onRejectedExecutor)
-*    如果当前promise处于pending状态，阻塞当前线程，等待promise状态转变为fulfilled或rejected
-*    如果处于fulfilled状态，执行onFulfilledExecutor.onFulfilled(resolvedData)回调。
-     * 如果回调返回一个Promise对象a，以a作为then方法的返回值，如果回调返回一个普通对象obj，以obj作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
-     * 如果执行回调过程中产生异常e,返回一个以e作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch。
-*    如果处于rejected状态，执行onRejectedExecutor.onRejected(rejectReason)回调，返回一个以当前promise的异常作为拒因、状态为rejected的新Promise，并拒绝执行接下来的所有Promise直到遇到pCatch或pFinally   
-                          参数：
-##### IPromise pCatch(OnCatchedExecutor onCatchedExecutor);
-then(null,onRejectedExecutor)的别名，但返回不同于then，出现异常时可以选择不拒绝接下来Promise的执行，可用于异常修正，类似于try{}catch{}   
-该方法会尝试捕获当前promise的异常,最终返回一个新Promise,当被捕获Promise处于不同的状态时有不同的行为
-* pending：阻塞当前线程，等待pending转变为fulfilled或rejected，行为同then
-* fulfilled：不执行回调，以当前Promise终值和状态返回一个全新的Promise
-* rejected：执行onCatched(Throwable catchReason)回调。
-     * 如果onCatched方法返回一个Promise，以这个Promise作为最终返回。
-     * 如果onCatched方法返回一个非Promise对象obj，以obj作为终值、fulfilled状态返回一个全新的对象。
-     * 如果执行回调过程中产生异常e，以e为拒因、状态为rejected返回一个新的Promise，并拒绝执行接下来的所有Promise直到再次遇到pCatch
-##### void listen(OnCompleteListener onCompleteListener);
-指定一个监听器，在promise状态转为fulfilled或rejected调用，该方法不会阻塞线程执行，可以多次调用指定多个监听器
-##### void pFinally(OnCompleteListener onCompleteListener);
-listen的别名，行为同listen  
-##### Status getStatus()
-获取promise的当前状态
-##### Object getResolvedData()
-获取promise fulfilled状态下的终值，其余状态下时为null
-##### Throwable getRejectedData()
-获取promise rejected状态下的拒因，其余状态下为null
-##### Future getFuture()
-获取promise对应异步任务的future
-##### boolean cancel()
-尝试取消promise对应的异步任务，底层调用future.cancel(true)。fulfilled或rejected状态下无效。
-#### Promise.Builder
-Promise对象生成器
-##### Builder pool(ExecutorService threadPool)
-指定一个线程池用于执行promise任务,如果不指定，每一个promise都将启动一个线程
-##### Builder promiseHanler(PromiseHandler promiseExecutor)
-指定promise执行器,在promiseHanler的run方法中实现线程的具体业务逻辑，注意==promise对象一经创建，将立即执行其中的逻辑==
-##### Builder externalInput(Object externalInput)
-向Promise注入一个外部参数，可以在指定PromiseHandler时通过PromiseExecutor.getExternalInput()获取
+状态转移只能由pending->fulfilled或pending->rejected，状态一旦发生转移无法再次改变。
+### 使用
 ```java
-int i = 3;
-IPromise p = new Promise.Builder()
-.externalInput(i).promiseHanler(new PromiseHandler() {
-    public Object run(PromiseExecutor executor) {
-        Integer args = (Integer) executor.getExternalInput();
-        return args*2;
-    }
+IPromise promise = new Promise.Builder().promiseHandler(handler->2*3).build();//mark1
+promise.then(resolvedData -> {
+    System.out.println(resolvedData);
+    return null;
+});
+```
+创建一个线程非常简单，mark1标注的行创建一个IPromise实例promise，并指定异步逻辑，这里简单地做了个乘法操作。promise实例一经创建，异步逻辑将立即执行，执行结果或执行中抛出的异常将保存在promise实例中。可以在创建promise实例时指定一个线程池。
+```java
+ExecutorService pool = Promise.pool(5,10);
+IPromise promise = new Promise.Builder().pool(pool).promiseHandler(handler->2*3).build();
+```
+上面创建了一个最小为5最大为10的线程池，promise实例对应的线程将被提交的线程池中执行。promise可以通过then或listen方法获取执行结果，then方法是阻塞的而listen是非阻塞的。   
+通常情况下异步逻辑需要访问外部参数，而外部参数往往并不是final的，promise提供了输入外部参数到内部逻辑的方法`externalInput`。
+```java
+Map<String,String> map = ImmutableMap.of("name","张三");
+IPromise promise = new Promise.Builder().externalInput(map).promiseHandler(handler->{
+    Map<String,String> m = (Map<String,String>)handler.getExternalInput();
+    return "你好："+m.get("name");
 }).build();
 ```
-##### Builder promise(IPromise promise)
-指定一个promise x，使当前promise接受 x 的状态
-* 如果 x 处于pending， 当前promise 需保持为pending直至 x 转为fulfilled或rejected
-* 如果 x 处于fulfilled，用x的终值值执行当前promise，可以在指定PromiseHandler时通过PromiseExecutor.getPromiseInput()获取
-* 如果 x 处于拒绝态，用相同的据因拒绝当前promise执行
+#### resolve和reject
+resolve和reject是PromiseExecutor类的方法，resolve方法将promise状态由pending->fulfilled，reject方法将promise状态由pending->rejected。如果promise已经是非pending状态，resolve和reject调用将无效。
 ```java
-ExecutorService fixedPool = Promise.pool(1);
-IPromise promise1 = new Promise.Builder().pool(fixedPool).promiseHanler(executor->3).build();
-IPromise promise2 = new Promise.Builder().pool(fixedPool)
-    .promise(promise1)
-    .promiseHanler(executor->4+(Integer) executor.getPromiseInput())
-.build()
-.then(resolvedData->{
+new Promise.Builder().promiseHandler(handler->{
+    int a = 2*3;
+    handler.resolve(a);
+    return null;
+}).build().listen(((resolvedData, e) -> {
     System.out.println(resolvedData);
-    return resolvedData;
-}, rejectedReason-> rejectedReason.printStackTrace());
+}));
 ```
-最终结果返回7,。如果promise1在执行过程中抛出异常e，promise2将被拒绝执行，将会以e作为拒因，状态为rejected返回一个新的Promise，最终会执行`rejectedReason-> rejectedReason.printStackTrace()`回调。
-##### IPromise build()
-创建一个Promise实例
-#### Promise的静态方法
-##### static IPromise all(IPromise ...promises)
-将多个 Promise 实例p1,...pn，包装成一个新的 Promise 实例 p,只有当p1-pn的状态都转为fulfilled时，p的状态才为fulfilled，此时p1-pn的返回值包装为一个数组Object[r1,...rn]作为p的终值。   
-只要p1-pn中任意一个被rejected，p的状态就转为rejected，将第一个被rejected的promise的拒因作为p的拒因，并尝试取消其余promise的执行(内部调用future.cancel(true))
-##### static IPromise race(IPromise ...promises)
-将多个 Promise p1,...pn实例，包装成一个新的 Promise 实例 p，只要p1-pn有一个状态发生改变，p的状态立即改变。并尝试取消其余promise的执行(内部调用future.cancel(true))   
-第一个改变的promise的状态和数据作为p的状态和数据
-##### static IPromise resolve()
-创建一个终值为null、fulfilled状态的promise
-##### static IPromise resolve(Object object)
-创建一个终值为object、fulfilled状态的promise
-##### static IPromise resolve(Object object,List  args)
-将object的then方法以异步方式执行，then方法的执行结果作为Promise的终值
-##### static IPromise resolve(Object object,String methodName,List  args)
-将object的指定方法以异步方式执行，该方法的执行结果作为Promise的终值，目标方法的参数必须按顺序包含在List中，如object.doSomething(int a,Map b)，用resolve执行为
+上面的例子中，计算出a的值，手动将promise状态转移为fulfilled，并将a的值作为promise的终值。同样也可以手动调用`handler.reject(e)`将promise状态转为rejected，e(*e为Throwable实例*)作为promise的据因。
+
+在前面和后面的例子中，并没有显示调用handler.resolve(x)方法，而是return具体的结果。因为在 resolve方法之后return之前程序抛出异常，该异常不会更改promise的状态，异常会被内部吞掉，resolve方法已经将promise的状态修改为fulfilled了。
 ```java
-List args = new ArrayList()
-args.add(1);
-args.add(map)
-Promise.resolve(object,"doSomething",args);
+new Promise.Builder().promiseHandler(handler->{
+    int a = 2*3;
+    handler.resolve(a);
+    throw new RuntimeException("err");
+}).build()
+        .listen(((resolvedData, e) -> {
+    System.out.println(resolvedData);
+    System.out.println(e==null);
+}));
 ```
-##### static IPromise reject(Object reason)
-创建一个拒因为reason、rejected状态的promise
-##### static IPromise pTry(Object object,String methodName,List  args)
-将object的指定方法以同步方式执行，该方法的执行结果作为Promise的终值，如果object为IPromise实例，将忽略methodName和args参数，异步执行该实例。   
+打印结果
+```
+6
+true
+```
+上面的例子中，手动调用resolve方法后，后续逻辑即便是抛出了异常，e仍然是null，因为promise状态已经转变为fulfilled，后续的所有逻辑(包括return的值)已经跟promise的最终状态无关，后续异常和返回结果将被忽略。因此非特殊情况下不建议直接调用resolve方法，而是直接return返回执行结果。这种方式是handler.resolve(x)的隐式做法，return的结果将作为promise的终值
+#### 异常捕获
+promise的rejected状态对应线程异常结束(运行时异常或手动调用executor.reject(e))，其据因保存了异常实例，这些异常被promise内部吞掉，并不会抛出到当前运行环境中，所有try...catch是无法捕获到promise内部逻辑抛出的异常的。promise提供了多种方式可以侦测到内部异常：
+* `then(onFulfilledExecutor,onRejectedExecutor)`  [API 参考wiki-then](https://github.com/zhanyingf15/promise/wiki#ipromise-thenonfulfilledexecutor-onfulfilledexecutor-onrejectedexecutor-onrejectedexecutor)
+* `listen(onCompleteListener),pFinally(onCompleteListener)`  [API 参考wiki-listen](https://github.com/zhanyingf15/promise/wiki#void-listenoncompletelistener-oncompletelistener)
+* `pCatch(onCatchedExecutor)`  [API 参考wiki-pCatch](https://github.com/zhanyingf15/promise/wiki#ipromise-pcatchoncatchedexecutor-oncatchedexecutor)
+
+then方法的第二个参数是可选参数，如果发生异常，第二个参数回调将被执行。  
+
+listen和pFinally行为是一致的，onCompleteListener的listen(Object resolvedData,Throwable e)方法第二参数为异常对象，如果发生异常，e为异常实例，否则为null。   
+
+pCatch是推荐使用的异常捕获方式，then和listen对于异常只能“观察”不能修正，在promise链式调用时，一旦发生异常，then方法只能观察到异常发生，但是异常仍会向调用链后方传递，并拒绝后面promise的执行。pCatch不同，它捕获到异常后，可以自行根据业务逻辑对异常处理，继续执行后面的promise链。
+```java
+new Promise.Builder().promiseHandler(executor -> 3).build().then(resolvedData->{//p1
+    System.out.println("a:"+resolvedData);
+    return new Promise.Builder().promiseHandler(executor -> {//p2
+        executor.reject(new RuntimeException("err"));
+        return resolvedData;
+    }).build();
+}).then(resolvedData1 -> {//p3
+        System.out.println("b:"+resolvedData1);
+        return "b:"+resolvedData1;
+    },rejectReason -> {
+        System.err.println("c:"+rejectReason);
+    }
+).then(resolvedData2 -> {//p4
+        System.out.println("d:"+resolvedData2);
+        return "d:"+resolvedData2;
+    },rejectReason -> {
+        System.err.println("e:"+rejectReason);
+    }
+);
+```
+执行结果
+```java
+a:3
+c:java.lang.RuntimeException: err
+e:java.lang.RuntimeException: err
+```
+在上面的例子中，p1,p2,p3链式调用，p1执行后在p2处手动抛出异常,p2的then侦测到异常，p3,p4的正常逻辑被取消了
+```java
+new Promise.Builder().promiseHandler(executor -> 3).build().then(resolvedData->{
+    System.out.println("a:"+resolvedData);
+    return new Promise.Builder().promiseHandler(executor -> {
+        executor.reject(new RuntimeException("err"));
+        return resolvedData;
+    }).build();
+}).pCatch(e->{
+    System.out.println("捕获到异常");
+    return 3;
+}).then(resolvedData1 -> {
+        System.out.println("b:"+resolvedData1);
+        return "b:"+resolvedData1;
+    },rejectReason -> {
+        System.err.println("c:"+rejectReason);
+    }
+).then(resolvedData2 -> {
+        System.out.println("d:"+resolvedData2);
+        return "d:"+resolvedData2;
+    },rejectReason -> {
+        System.err.println("e:"+rejectReason);
+    }
+);
+```
+打印结果
+```
+a:3
+捕获到异常
+b:3
+d:b:3
+```
+pCatch捕获到异常后，返回一个修正值3，这个值会传递个下一个promise处理，继续完成链式调用。pCatch也可以直接返回一个promise，promise的状态决定是否继续后续链的执行(*如果pCatch返回的promise是rejected状态仍然会拒绝后续promise的执行直到遇到下一个pCatch*)
+
+> pCatch可以在promise链的任何位置出现，出现的次数不受限制，如果没有异常出现，将忽略pCatch逻辑。listen和pFinally只能在链的末尾出现，无论异常是否发生，它都将被调用(类似于try...catch...finally)。
+
+#### promise 组合
+由于开发中无法预计线程什么时候执行结束，有时需要拿到线程执行结果在进行下一步操作就比较麻烦。如果是单个promise，可以简单地使用then方法阻塞当前线程，等待promise线程执行完毕。如果是多个promise并行执行，需要等待所有的promise都执行完毕才能执行下一步，可以使用all或者waitAll方法。
+```java
+IPromise p1 = new Promise.Builder().promiseHandler(executor -> {
+    Thread.sleep(1000);
+    return 1;
+}).build();
+IPromise p2 = new Promise.Builder().promiseHandler(executor -> {
+    Thread.sleep(4000);
+    return 2;
+}).build();
+IPromise p3 = new Promise.Builder().promiseHandler(executor -> {
+    Thread.sleep(2000);
+    return 3;
+}).build();
+Promise.all(p1,p2,p3).then(resolvedData -> {
+    Object[] datas = (Object[])resolvedData;
+    for(Object d:datas){
+        System.out.println(d);
+    }
+    return null;
+},e->e.printStackTrace());
+```
+上面创建了三个promise，Promise.all将三个promise组装成一个新promise p，新的promise p的状态将由p1-p3的状态决定，如果p1-p3全部正常结束，p的状态是fulfilled，其终值是一个数组，按传入顺序保存p1-p3的执行结果。依据promise规范，如果p1-p3任意一个异常结束或手动调用executor.reject()方法将pn状态转为rejected，p的状态会转为rejected，并尝试取消其余promise。具体可以参考[wiki all](https://github.com/zhanyingf15/promise/wiki#static-ipromise-allipromise-promises)。
+> 1.0.1版本all还有一个重载方法all(ExecutorService threadPool,final IPromise ...promises),可以指定p的执行环境，不指定线程池默认新开一个线程。
+
+在有些情况下，当p1-p3的其中一个发生异常时，并不希望p的状态立即转变为rejected并尝试取消其余promise的执行，而是希望其余promise继续执行，可以使用waitAll()方法。Promise.waitAll将多个promise组装成一个新promise p，不同于all，p1-p3的状态不会影响p的状态，如果p自身未发生异常(*waitAll内部使用了CountDownLatch处理多个线程，可能会有异常*)，p的状态一直是fulfilled，其终值是一个数组，数组值是pn的终值或据因。具体可参考[wiki-waitAll](https://github.com/zhanyingf15/promise/wiki#static-ipromise-waitallipromise-promises),使用方式如下：
+```java
+IPromise p1 = new Promise.Builder().promiseHandler(handler->2*3).build();
+IPromise p2 = new Promise.Builder().promiseHandler(handler->{
+    throw new RuntimeException("手动抛出异常");
+}).build();
+IPromise p = Promise.waitAll(p1,p2).then(resolvedData -> {
+    Object[] datas = (Object[]) resolvedData;
+    for(Object d:datas){
+        if(d instanceof Throwable){
+            ((Throwable)d).printStackTrace();
+        }else{
+            System.out.println(d);
+        }
+    }
+    return datas;
+});
+```
+输出结果
+```
+6
+java.lang.RuntimeException: 手动抛出异常
+```
+p1为正常执行完毕，其终值为6，p2手动抛出异常，使用waitAll后，p的终值为一个数组，遍历数组需要判断值的类型。
+
+> 类似于all，Promise.race方法将多个 Promise p1,...pn实例，包装成一个新的 Promise 实例 p，只要p1-pn有一个状态发生改变（无论是转变为正常状态还是异常状态），p的状态立即改变，并尝试取消其余promise的执行。第一个改变的promise的状态和终值作为p的状态和终值
+
+#### Promise.resolve和Promise.pTry
+这两个方法都是Promise的静态方法。Promise.resolve方法有多个重载，最重要的一个是`resolve(Object object,String methodName,List<Object> args)`，该方法是将object的指定方法以异步方式执行，该方法的执行结果作为Promise的终值，具体可参考[wiki Promise.resolve](https://github.com/zhanyingf15/promise/wiki#static-ipromise-resolveobject-objectstring-methodnamelist--args)。
+
+pTry方法将object的指定方法以同步方式执行，该方法的执行结果作为Promise的终值，如果object为IPromise实例，将忽略methodName和args参数，异步执行该实例。   
 该方法是以Promise统一处理同步和异步方法，不管object是同步操作还是异步操作，都可以使用then指定下一步流程,用pCatch方法捕获异常,避免开发中出现以下情况
-```
+```java
 try{
   object.doSomething(args1,args2);//可能会抛出异常
   promise.then(resolvedData->{
@@ -245,288 +289,4 @@ Promise.pTry(object,"doSomething",args)
 }).pCatch(e->{
   //异常处理逻辑
 })
-```
-#### PromiseHandler
-定义异步逻辑的接口
-##### Object run(PromiseExecutor executor)throws Exception;
-run方法中实现具体的业务逻辑,最终run方式是在线程的call方法执行，如果run方法中含有wait、sleep...等锁操作，可能需要自行处理`InterruptedException`。因为该线程可能被外部调用cancel()或interrupt()方法
-#### PromiseExecutor
-promise状态处理
-##### void resolve(final Object args)
-将Promise对象的状态从“未完成”变为“成功”（即从pending变为fulfilled）。注意该方法一经调用，promise状态将不可改变，如下例，在调用executor.resolve(3);后，return之前抛出一个异常，promise的状态依旧是fulfilled，终值为3。
-```java
-new Promise.Builder().promiseHanler(new PromiseHandler(){
-    @Override
-    public Object run(PromiseExecutor executor) {
-        executor.resolve(3);
-        throw new RuntimeException("error");
-        return null;
-    }
-}).build()
-```
-在run方法中executor.resolve(3)等同于return 3
-```java
-@Override
-public Object run(PromiseExecutor executor) {
-    return 3;
-}
-```
-大多数情况下建议直接使用return返回promise的终值。
-##### void reject(final Throwable args)
-将Promise对象的状态从“未完成”变为“失败”（即从pending变为fulfilled）
-##### Object getExternalInput()
-获取通过`new Promise.Builder().externalInput(Object externalInput)`方法注入的参数，具体参考`Promise.Builder#externalInput(Object externalInput)`
-##### Object getPromiseInput()
-获内部promise的执行结果。通过new Promise.Builder().promise(promise1)指定的promise1的执行结果。具体参考
-`Promise.Builder#promise(IPromise promise)`
-#### OnFulfilledExecutor
-fulfilled回调接口
-##### Object onFulfilled(Object resolvedData)throws Exception;
-状态转为fulfilled时的回调，返回值可以是IPromise实例或普通对象。如果object是IPromise实例，object作为then方法的返回值，如果object是个普通对象，以object作为终值、状态为fulfilled包装一个新Promise作为then方法的返回值
-#### OnRejectedExecutor
-rejected回调接口
-##### void onRejected(Throwable rejectReason)throws Exception;
-当Promise转变为rejected状态时的回调
-#### OnCatchedExecutor
-rejected回调接口
-##### Object onCatched(Throwable catchReason)throws Exception;
-当发生异常时的回调,最终返回一个Promise或普通对象，如果是一个普通对象，这个对象将作为下一个Promise的终值
-#### OnCompleteListener
-##### void listen(Object resolvedData,Throwable e);
-当Promise执行结束时的回调(无论是fulfilled还是rejected)
-* resolvedData fulfilled状态时的终值，rejected状态时为null
-* e rejected状态时的异常信息,fulfilled状态时为null
-#### 示例
-##### 示例1：基本使用
-```java
-new Promise.Builder().promiseHanler(new PromiseHandler(){
-    @Override
-    public Object run(PromiseExecutor executor) {
-        executor.resolve(3);//返回异步执行结果3
-        return null;
-    }
-}).build().then(new OnFulfilledExecutor() {
-    @Override
-    public Object onFulfilled(Object resolvedData) {
-        Integer i = ((Integer)resolvedData)+1;//获取上一个promsie执行结果3,执行+1
-        System.out.println(i);//输出执行结果4
-        //创建一个新的promise，将4作为该promise的输入
-        IPromise p = new Promise.Builder().externalInput(i).promiseHanler(new PromiseHandler() {
-            @Override
-            public Object run(PromiseExecutor executor) {
-                //获取外部输入4
-                Integer args = (Integer) executor.getExternalInput();
-                executor.resolve(args*2);//执行 4x2
-                return null;
-            }
-        }).build();
-        return p;//返回该promise p
-    }
-})
-.then(new OnFulfilledExecutor() {//执行p的回调
-    @Override
-    public Object onFulfilled(Object args) {
-        System.out.println(args);//输出p的执行结果
-        return args;
-    }
-}, new OnRejectedExecutor() {//捕获可能出现的异常
-    @Override
-    public void onRejected(Throwable rejectedReason) throws Exception {
-        rejectedReason.printStackTrace();
-    }
-});
-```
-结果
-```
-4
-8
-```
-##### 示例2：promise resolve promise
-```java
-ExecutorService fixedPool = Promise.pool(1);//创建一个线程池
-//创建promise1
-IPromise promise1 = new Promise.Builder().pool(fixedPool).promiseHanler(executor->3).build();
-//创建promise2
-IPromise promise2 = new Promise.Builder().pool(fixedPool)
-    .promise(promise1)//让promise2接受promise1的状态，优先执行promise1
-    .promiseHanler(executor->{
-        //获取promise1的执行结果，执行promise2的逻辑
-        return 4+(Integer) executor.getPromiseInput();
-    })
-    .build()
-    .then(resolvedData->{
-        System.out.println(resolvedData);//打印promise2的执行结果 
-        return resolvedData;
-    }, rejectedReason-> rejectedReason.printStackTrace());
-System.out.println("end");
-fixedPool.shutdown();
-```
-结果
-```
-7
-end
-```
-##### 示例3：错误处理
-```
-new Promise.Builder().promiseHanler(executor -> 3).build().then(resolvedData->{
-    System.out.println("a:"+resolvedData);
-    return new Promise.Builder().promiseHanler(executor -> {
-        executor.reject(new RuntimeException("err"));//抛出异常
-        return null;
-    }).build();
-}).then(resolvedData1 -> {//fulfilled回调
-    System.out.println("b:"+resolvedData1);
-    return resolvedData1;
-},rejectReason -> {//rejected回调
-    System.err.println("c:"+rejectReason);
-});
-```
-结果
-```
-a:3
-c:java.lang.RuntimeException: err
-```
-##### 示例4：pCatch
-```java
-new Promise.Builder().promiseHanler(executor -> 0).build()
-  .then(res0->{
-    System.out.println("a:"+res0);//输出 a:0
-    Thread.sleep(100);
-    return 1;//返回1
-}).then(res1 -> {
-    throw new RuntimeException("throw error");//抛出异常
-}).then(res2->{
-    Thread.sleep(100);
-    System.out.println("b:"+res2);
-    return 2;
-}).pCatch(e->{
-    Thread.sleep(100);
-    System.out.println("c:");//输出c:
-    e.printStackTrace();
-    return 3;
-}).then(res3->{
-    Thread.sleep(100);
-    System.out.println("d:"+res3);//输出d:3
-    return 4;
-});
-```
-结果
-```
-a:0
-c:
-runtimeException:throw error
-d:3
-```
-从上面结果可以看出,在res1出抛出异常后，拒绝了res2处的执行，被pCatch捕获,pCatch返回3,被包装成终值为3、fulfilled状态的promise，在res3打印d:3。
-##### 示例5：Promise.all(IPromise ...promises)
-```java
-IPromise p1 = new Promise.Builder().promiseHanler(executor -> {
-    Thread.sleep(1000);
-    return 1;
-}).build();
-IPromise p2 = new Promise.Builder().promiseHanler(executor -> {
-    Thread.sleep(4000);
-    return 2;
-}).build();
-IPromise p3 = new Promise.Builder().promiseHanler(executor -> {
-    Thread.sleep(2000);
-    return 3;
-}).build();
-long s = System.currentTimeMillis();
-Promise.all(p1,p2,p3).then(resolvedData -> {
-    Object[] datas = (Object[])resolvedData;
-    for(Object d:datas){
-        System.out.println(d);
-    }
-    return null;
-},e->e.printStackTrace());
-System.out.println("耗时："+(System.currentTimeMillis()-s));
-```
-结果
-```
-1
-2
-3
-耗时：4033
-```
-##### 示例6：线程取消
-```java
-Map<String,Boolean> p1Flag = new HashMap<>();
-p1Flag.put("flag",true);
-IPromise p1 = new Promise.Builder().externalInput(p1Flag).promiseHanler(executor -> {
-    while (((Map<String,Boolean>)executor.getExternalInput()).get("flag")){
-        //do something
-        System.out.println("p1 正在执行任务");
-    }
-    System.out.println("p1任务完成，正常结束");
-    return 1;
-}).build();
-IPromise p2 = new Promise.Builder().promiseHanler(executor -> {
-    while (!Thread.currentThread().isInterrupted()){
-        System.out.println("执行p2正常逻辑");
-    }
-    System.err.println("p2线程被取消");
-    return 2;
-}).build();
-IPromise p3 = new Promise.Builder().promiseHanler(executor -> {
-    Thread.sleep(10);
-    throw new RuntimeException("p3抛出异常");
-}).build();
-IPromise p4 = new Promise.Builder().finalPromise("4",true).build();
-long s = System.currentTimeMillis();
-Promise.all(p1,p2,p3,p4).then(resolvedData -> {
-    Object[] datas = (Object[])resolvedData;
-    for(Object d:datas){
-        System.out.println(d);
-    }
-    return null;
-},e->e.printStackTrace());
-System.out.println("耗时："+(System.currentTimeMillis()-s));
-p1Flag.put("flag",false);
-```
-可能的结果如下
-```
-p1 正在执行任务
-p1 正在执行任务
-执行p2正常逻辑
-执行p2正常逻辑
-p1 正在执行任务 
-runtimeException：p3抛出异常
-p2线程被取消
-p1 正在执行任务
-p1 正在执行任务
-p1 正在执行任务 
-p1任务完成，正常结束
-```
-从上面结果可以看出，开始p1和p2都在正常执行，当p3抛出异常后，Promise.all方法立即返回p3的异常并打印，同时取消p1和p2的执行，由于p2判断了线程状态`Thread.currentThread().isInterrupted()`,所以p2执行了正常的退出逻辑。p1仍然在执行，并没有被取消掉，最后打印p1任务完成，正常结束是因为程序末尾执行了`p1Flag.put("flag",false);`，否则p1会永远循环打印。
-##### 示例7：同步方法异步执行
-```java
-public class ThenTest {
-    public Integer then(int a,int b){
-        //打印当前执行现场名称
-        System.out.println(Thread.currentThread().getName());
-        return a+b;
-    }
-    public static void main(String[] args){
-        //打印主线程名称
-        System.out.println(Thread.currentThread().getName());
-        List arg = new ArrayList<>();
-        arg.add(1);
-        arg.add(2);
-        //将ThenTest实例then方法异步执行
-        Promise.resolve(new ThenTest(),arg).then(resolvedData -> {
-            System.out.println(resolvedData);
-            return resolvedData;
-        }).pCatch(e->{
-            e.printStackTrace();
-            return 1;
-        });
-    }
-}
-```
-结果
-```
-main
-promise-thread-0
-3
 ```
